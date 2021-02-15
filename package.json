@@ -7,6 +7,16 @@
     ".": "./lib/client.js",
     "./server": "./lib/server.js"
   },
+  "typesVersions": {
+    "*": {
+      ".": [
+        "lib/client"
+      ],
+      "server": [
+        "lib/server"
+      ]
+    }
+  },
   "scripts": {
     "build": "rm -rf lib && tsc",
     "start": "node lib/test/server",
