@@ -22,17 +22,20 @@ export function rpcClient<T>(url: string) {
       },
       body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
     });
-    const {result, error} = await res.json();
+    const { result, error } = await res.json();
     if (error) {
-      const {code, message, data} = error;
+      const { code, message, data } = error;
       throw new RpcError(message, code, data);
     }
     return result;
   };
 
-  return new Proxy({}, {
-    get(target, prop, receiver) {
-      return (...args: any) => request(prop.toString(), args);
+  return new Proxy(
+    {},
+    {
+      get(target, prop, receiver) {
+        return (...args: any) => request(prop.toString(), args);
+      },
     }
-  }) as T;
+  ) as T;
 }
