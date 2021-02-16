@@ -4,21 +4,27 @@
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "type": "module",
   "exports": {
-    ".": "./lib/client.js",
-    "./server": "./lib/server.js"
+    ".": {
+      "require": "./lib/cjs/client.js",
+      "default": "./lib/esm/client.js"
+    },
+    "./server": {
+      "require": "./lib/cjs/server.js",
+      "default": "./lib/esm/server.js"
+    }
   },
   "typesVersions": {
     "*": {
       ".": [
-        "lib/client"
+        "lib/esm/client"
       ],
       "server": [
-        "lib/server"
+        "lib/esm/server"
       ]
     }
   },
   "scripts": {
-    "build": "rm -rf lib && tsc",
+    "build": "rm -rf lib && tsc && tsc -p tsconfig-cjs.json && cp package-cjs.json lib/cjs/package.json",
     "start": "node lib/test/server",
     "pretest": "npm run build",
     "test": "with-server node lib/test/client"

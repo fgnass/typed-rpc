@@ -1,14 +1,13 @@
 {
   "compilerOptions": {
-    "module": "ES2020",
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "target": "ES2020",
-    "noImplicitAny": true,
-    "moduleResolution": "node",
     "declaration": true,
+    "esModuleInterop": true,
+    "module": "ES2020",
+    "moduleResolution": "node",
+    "outDir": "lib/esm",
     "sourceMap": true,
-    "outDir": "lib"
+    "strict": true,
+    "target": "ES2020"
   },
   "include": ["src/**/*"]
 }
