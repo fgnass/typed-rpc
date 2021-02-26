@@ -3,6 +3,8 @@
   "version": "1.0.3",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "type": "module",
+  "main": "./lib/cjs/client.js",
+  "module": "./lib/esm/client.js",
   "exports": {
     ".": {
       "require": "./lib/cjs/client.js",
