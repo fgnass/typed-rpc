@@ -84,7 +84,7 @@ export async function handleRpc(
     return {
       jsonrpc,
       id,
-      error: { code: -32601, message: "Method not found" },
+      error: { code: -32601, message: `Method not found: ${method}` },
     };
   }
   try {
