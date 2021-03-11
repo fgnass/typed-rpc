@@ -11,17 +11,32 @@ export class RpcError extends Error {
   }
 }
 
-export function rpcClient<T>(url: string) {
+type Overrides = Record<string, any> & {
+  getHeaders?(): Record<string, string> | undefined;
+};
+
+export function rpcClient<T extends object, O extends Overrides = {}>(
+  url: string,
+  overrides?: O
+) {
   const request = async (method: string, params: any[]) => {
     const id = Date.now();
+    const headers =
+      overrides && overrides.getHeaders ? overrides.getHeaders() : {};
+
     const res = await fetch(url, {
       method: "POST",
       headers: {
         Accept: "application/json",
         "Content-Type": "application/json",
+        ...headers,
       },
       body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+      credentials: "include",
     });
+    if (!res.ok) {
+      throw new RpcError(res.statusText, res.status);
+    }
     const { result, error } = await res.json();
     if (error) {
       const { code, message, data } = error;
@@ -30,12 +45,11 @@ export function rpcClient<T>(url: string) {
     return result;
   };
 
-  return new Proxy(
-    {},
-    {
-      get(target, prop, receiver) {
-        return (...args: any) => request(prop.toString(), args);
-      },
-    }
-  ) as T;
+  const target = overrides || {};
+  return new Proxy(target, {
+    get(target, prop, receiver) {
+      if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
+      return (...args: any) => request(prop.toString(), args);
+    },
+  }) as T & O;
 }
