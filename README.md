@@ -55,6 +55,58 @@ app.post("/api", rpcHandler(new MyServiceImpl()));
 app.listen(3000);
 ```
 
+## Advanced Usage
+
+### Excluding methods
+
+If you don't want to proxy all methods to the server you can provide a second argument with local method overrides:
+
+```ts
+const client = rpcClient<MyService>(apiUrl, {
+  hello() {
+    return "override";
+  },
+});
+const result = await client.hello("world");
+// result === "override"
+```
+
+### Custom headers
+
+You can set custom request headers by providing a `getHeaders` function:
+
+```ts
+const client = rpcClient<MyService>(apiUrl, {
+  getHeaders() {
+    return {
+      Authorization: auth,
+    };
+  },
+});
+```
+
+### Mixins
+
+Sometimes it can be useful to mix in additional methods, for example to configure te custom headers:
+
+```ts
+const config = {
+  auth: "",
+  setAuth(auth: string) {
+    this.auth = auth;
+  },
+  getHeaders() {
+    if (!this.auth) return;
+    return {
+      Authorization: this.auth,
+    };
+  },
+};
+
+const client = rpcClient<MyService, typeof config>(apiUrl, config);
+client.setAuth("secret");
+```
+
 # License
 
 MIT
