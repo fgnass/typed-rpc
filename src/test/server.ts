@@ -6,6 +6,12 @@ const app = express();
 
 app.use(express.json());
 
+app.use("/api", (req, res, next) => {
+  const status = req.header("Prefer-Status");
+  if (status) res.status(parseInt(status)).end();
+  else next();
+});
+
 app.post("/api", rpcHandler(new MyServiceImpl()));
 
 const port = process.env.PORT || 3000;
