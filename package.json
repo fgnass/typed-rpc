@@ -2,34 +2,26 @@
   "name": "typed-rpc",
   "version": "1.0.4",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
-  "type": "module",
-  "main": "./lib/cjs/client.js",
-  "module": "./lib/esm/client.js",
+  "main": "./lib/client.js",
   "exports": {
-    ".": {
-      "require": "./lib/cjs/client.js",
-      "default": "./lib/esm/client.js"
-    },
-    "./server": {
-      "require": "./lib/cjs/server.js",
-      "default": "./lib/esm/server.js"
-    }
+    ".": "./lib/client.js",
+    "./server": "./lib/server.js"
   },
   "typesVersions": {
     "*": {
       ".": [
-        "lib/esm/client"
+        "lib/client"
       ],
       "server": [
-        "lib/esm/server"
+        "lib/server"
       ]
     }
   },
   "scripts": {
-    "build": "rm -rf lib && tsc && tsc -p tsconfig-cjs.json && cp package-cjs.json lib/cjs/package.json",
+    "build": "rm -rf lib && tsc",
     "start": "node lib/test/server",
     "pretest": "npm run build",
-    "test": "with-server node lib/test/client"
+    "test": "with-server tap lib/test/client.js"
   },
   "author": "Felix Gnass <fgnass@gmail.com>",
   "repository": "fgnass/typed-rpc",

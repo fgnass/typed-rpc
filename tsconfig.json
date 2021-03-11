@@ -2,12 +2,12 @@
   "compilerOptions": {
     "declaration": true,
     "esModuleInterop": true,
-    "module": "ES2020",
+    "module": "CommonJS",
     "moduleResolution": "node",
-    "outDir": "lib/esm",
+    "outDir": "lib",
     "sourceMap": true,
     "strict": true,
     "target": "ES2020"
   },
-  "include": ["src/**/*"]
+  "include": ["src"]
 }
