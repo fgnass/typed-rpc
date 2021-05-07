@@ -21,7 +21,8 @@
     "build": "rm -rf lib && tsc",
     "start": "node lib/test/server",
     "pretest": "npm run build",
-    "test": "with-server tap lib/test/client.js"
+    "test": "with-server tap lib/test/client.js",
+    "prepublish": "npm run build"
   },
   "author": "Felix Gnass <fgnass@gmail.com>",
   "repository": "fgnass/typed-rpc",
