@@ -1,18 +1,18 @@
 import type { RequestHandler } from "express";
 
-interface JsonRpcRequest {
+export interface JsonRpcRequest {
   jsonrpc: "2.0";
   id?: string | number | null;
   method: string;
   params: any[];
 }
 
-interface JsonRpcResponse {
+export interface JsonRpcResponse {
   jsonrpc: "2.0";
   id?: string | number | null;
 }
 
-interface JsonRpcErrorResponse extends JsonRpcResponse {
+export interface JsonRpcErrorResponse extends JsonRpcResponse {
   error: {
     code: number;
     message: string;
@@ -20,14 +20,14 @@ interface JsonRpcErrorResponse extends JsonRpcResponse {
   };
 }
 
-interface JsonRpcSuccessResponse extends JsonRpcResponse {
+export interface JsonRpcSuccessResponse extends JsonRpcResponse {
   result: any;
 }
 
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
  */
-function isJsonRpcRequest(req: any): req is JsonRpcRequest {
+export function isJsonRpcRequest(req: any): req is JsonRpcRequest {
   if (req.jsonrpc !== "2.0") return false;
   if (typeof req.method !== "string") return false;
   if (!Array.isArray(req.params)) return false;
