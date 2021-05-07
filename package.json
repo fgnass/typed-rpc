@@ -1,6 +1,6 @@
 {
   "name": "typed-rpc",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "main": "./lib/client.js",
   "exports": {
