@@ -14,6 +14,11 @@ app.use("/api", (req, res, next) => {
 
 app.post("/api", rpcHandler(new MyServiceImpl()));
 
+app.post(
+  "/request-aware-api",
+  rpcHandler((req) => new MyServiceImpl(req.headers))
+);
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("Server listening on http://0.0.0.0:%s", port);

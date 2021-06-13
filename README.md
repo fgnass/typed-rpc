@@ -57,6 +57,17 @@ app.listen(3000);
 
 ## Advanced Usage
 
+### Accessing the request
+
+Sometimes it's necessary to access the request object inside the service. This can be done by passing a _ServiceFactory_, e.g. a function that creates a service for each request:
+
+```ts
+app.post(
+  "/api",
+  rpcHandler((req) => new MyServiceImpl(req.user))
+);
+```
+
 ### Excluding methods
 
 If you don't want to proxy all methods to the server you can provide a second argument with local method overrides:
@@ -87,7 +98,7 @@ const client = rpcClient<MyService>(apiUrl, {
 
 ### Mixins
 
-Sometimes it can be useful to mix in additional methods, for example to configure te custom headers:
+Sometimes it can be useful to mix in additional methods, for example to configure the custom headers:
 
 ```ts
 const config = {

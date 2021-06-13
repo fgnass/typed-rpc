@@ -68,3 +68,18 @@ tap.test("should access this in overrides", async (t) => {
   const promise = client.hello("world");
   t.rejects(promise, new RpcError("Not Found", 404));
 });
+
+tap.test("should echo headers", async (t) => {
+  const client = rpcClient<MyService>(
+    process.env.SERVER_URL + "/request-aware-api",
+    {
+      getHeaders() {
+        return {
+          "X-Hello": "world",
+        };
+      },
+    }
+  );
+  const res = await client.echoHeader("X-Hello");
+  t.equal(res, "world");
+});

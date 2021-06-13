@@ -1,4 +1,4 @@
-import type { RequestHandler } from "express";
+import type { Request, RequestHandler } from "express";
 
 export interface JsonRpcRequest {
   jsonrpc: "2.0";
@@ -96,8 +96,17 @@ export async function handleRpc(
   }
 }
 
-export function rpcHandler(service: object) {
+export interface ServiceFactory {
+  (req: Request): object;
+}
+
+export function rpcHandler(serviceOrFactory: object | ServiceFactory) {
   const handler: RequestHandler = (req, res, next) => {
+    const service =
+      typeof serviceOrFactory === "function"
+        ? serviceOrFactory(req)
+        : serviceOrFactory;
+
     handleRpc(req.body, service)
       .then((result) => res.json(result))
       .catch(next);
