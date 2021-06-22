@@ -11,6 +11,12 @@ tap.test("should talk to server", async (t) => {
   t.equal(result, "Hello world!");
 });
 
+tap.test("should omit trailing undefined params", async (t) => {
+  const client = rpcClient<MyService>(apiUrl);
+  const result = await client.optional("hello", undefined);
+  t.equal(result, "hello undefined!");
+});
+
 tap.test("should override methods", async (t) => {
   const client = rpcClient<MyService>(apiUrl, {
     hello() {

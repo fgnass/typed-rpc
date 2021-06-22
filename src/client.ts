@@ -31,7 +31,12 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
         "Content-Type": "application/json",
         ...headers,
       },
-      body: JSON.stringify({ jsonrpc: "2.0", id, method, params }),
+      body: JSON.stringify({
+        jsonrpc: "2.0",
+        id,
+        method,
+        params: removeTrailingUndefs(params),
+      }),
       credentials: "include",
     });
     if (!res.ok) {
@@ -52,4 +57,10 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
       return (...args: any) => request(prop.toString(), args);
     },
   }) as T & O;
+}
+
+function removeTrailingUndefs(values: any[]) {
+  const a = [...values];
+  while (a.length && a[a.length - 1] === undefined) a.length--;
+  return a;
 }

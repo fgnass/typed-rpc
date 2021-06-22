@@ -10,6 +10,9 @@ export class MyServiceImpl implements MyService {
   async sorry(name: string): Promise<string> {
     throw new Error(`Sorry ${name}.`);
   }
+  async optional(hello: string, world?: string) {
+    return `${hello} ${world}!`;
+  }
   async echoHeader(name: string): Promise<string | string[] | undefined> {
     return this.headers?.[name.toLowerCase()];
   }
