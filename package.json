@@ -26,6 +26,6 @@
     "isomorphic-fetch": "^3.0.0",
     "tap": "^15.0.9",
     "typescript": "^4.2.4",
-    "with-server": "^1.1.0"
+    "with-server": "^2.0.0"
   }
 }
