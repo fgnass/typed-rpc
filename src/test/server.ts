@@ -21,5 +21,5 @@ app.post(
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
-  console.log("Server listening on http://0.0.0.0:%s", port);
+  console.log("Server listening on http://localhost:%s", port);
 });
