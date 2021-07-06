@@ -56,9 +56,9 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
       if (Reflect.has(target, prop)) {
         return Reflect.get(target, prop, receiver);
       }
-      //if (isRemote(prop)) {
-      return (...args: any) => request(prop.toString(), args);
-      //}
+      if (isRemote(prop)) {
+        return (...args: any) => request(prop.toString(), args);
+      }
     },
   }) as T & O;
 }
