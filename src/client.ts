@@ -53,10 +53,21 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
   const target = overrides || {};
   return new Proxy(target, {
     get(target, prop, receiver) {
-      if (Reflect.has(target, prop)) return Reflect.get(target, prop, receiver);
+      if (Reflect.has(target, prop)) {
+        return Reflect.get(target, prop, receiver);
+      }
+      //if (isRemote(prop)) {
       return (...args: any) => request(prop.toString(), args);
+      //}
     },
   }) as T & O;
+}
+
+function isRemote(prop: string | symbol) {
+  if (typeof prop === "symbol") return false;
+  if (prop.startsWith("$")) return false;
+  if (prop === "constructor") return false;
+  return true;
 }
 
 function removeTrailingUndefs(values: any[]) {
