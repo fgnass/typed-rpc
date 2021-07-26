@@ -12,7 +12,10 @@ export class RpcError extends Error {
 }
 
 type Overrides = Record<string, any> & {
-  getHeaders?(): Record<string, string> | undefined;
+  getHeaders?():
+    | Record<string, string>
+    | Promise<Record<string, string>>
+    | undefined;
 };
 
 export function rpcClient<T extends object, O extends Overrides = {}>(
@@ -22,7 +25,7 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
   const request = async (method: string, params: any[]) => {
     const id = Date.now();
     const headers =
-      overrides && overrides.getHeaders ? overrides.getHeaders() : {};
+      overrides && overrides.getHeaders ? await overrides.getHeaders() : {};
 
     const res = await fetch(url, {
       method: "POST",
