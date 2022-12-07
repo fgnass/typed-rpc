@@ -1,5 +1,3 @@
-import type { Request, RequestHandler } from "express";
-
 export interface JsonRpcRequest {
   jsonrpc: "2.0";
   id?: string | number | null;
@@ -41,7 +39,7 @@ function hasProperty<T, P extends string>(
   obj: T,
   prop: P
 ): obj is T & Record<P, unknown> {
-  return typeof obj === "object" && prop in obj;
+  return typeof obj === "object" && obj !== null && prop in obj;
 }
 
 /**
@@ -52,6 +50,20 @@ function hasMethod<T, P extends string>(
   prop: P
 ): obj is T & Record<P, (...params: any[]) => any> {
   return hasProperty(obj, prop) && typeof obj[prop] === "function";
+}
+
+function getErrorCode(err: unknown) {
+  if (hasProperty(err, "code") && typeof err.code === "number") {
+    return err.code;
+  }
+  return -32000;
+}
+
+function getErrorMessage(err: unknown) {
+  if (hasProperty(err, "message") && typeof err.message === "string") {
+    return err.message;
+  }
+  return "";
 }
 
 /**
@@ -91,26 +103,13 @@ export async function handleRpc(
     const result = await service[method](...params);
     return { jsonrpc, id, result };
   } catch (err) {
-    const code = err.code || -32000;
-    return { jsonrpc, id, error: { code, message: err.message } };
+    return {
+      jsonrpc,
+      id,
+      error: {
+        code: getErrorCode(err),
+        message: getErrorMessage(err),
+      },
+    };
   }
-}
-
-export interface ServiceFactory {
-  (req: Request): object;
-}
-
-export function rpcHandler(serviceOrFactory: object | ServiceFactory) {
-  const handler: RequestHandler = (req, res, next) => {
-    const service =
-      typeof serviceOrFactory === "function"
-        ? serviceOrFactory(req)
-        : serviceOrFactory;
-
-    handleRpc(req.body, service)
-      .then((result) => res.json(result))
-      .catch(next);
-  };
-
-  return handler;
 }

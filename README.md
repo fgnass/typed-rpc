@@ -1,90 +1,121 @@
 # typed-rpc
 
-Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects. It has beed designed for use-cases where you control both client and server and your client is the only API consumer you need to support. Therefore it comes with the following features and tradeoffs:
+![npm bundle size](https://img.shields.io/bundlephobia/minzip/typed-rpc)
 
-- Service definition via TypeScript interfaces
-- No code generation step
-- Uses ES6 proxies (sorry, no IE11 support)
-- No runtime type-checking
-- Uses the JSON-RPC 2.0 protocol
-- No batch requests
-- HTTP(S) as only transport
+Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects
+that comes with the following features and non-features:
+
+- 👩‍🔧 Service definition via TypeScript types
+- 📜 JSON-RPC 2.0 protocol
+- 🕵️ Full IDE autocompletion
+- 🪶 Tiny footprint (< 1kB)
+- 🌎 Support for Deno and edge runtimes
+- 🚫 No code generation step
+- 🚫 No batch requests
+- 🚫 No other transports other than HTTP(S)
+- 🚫 No runtime type-checking
+- 🚫 No IE11 support
 
 ## Usage
 
-Interface shared between client and server:
+Create a _service_ in your backend and export its type, so that the
+frontend can access type information:
 
 ```ts
-export interface MyService {
-  hello(name: string): Promise<string>;
-}
-```
+// server/myService.ts
 
-Client code:
-
-```ts
-import { rpcClient } from "typed-rpc";
-import { MyService } from "../shared/MyService";
-
-const client = rpcClient<MyService>("http://localhost:3000/api");
-
-async function greet() {
-  const greeting = await client.hello("world");
-  console.log(greeting);
-}
-```
-
-Server code:
-
-```ts
-import express from "express";
-import { rpcHandler } from "typed-rpc/server";
-import { MyService } from "../shared/MyService";
-
-class MyServiceImpl implements MyService {
-  async hello(name: string) {
+export const myService = {
+  hello(name: string) {
     return `Hello ${name}!`;
-  }
-}
+  },
+};
+
+export type MyService = typeof myService;
+```
+
+> **Note**
+> Of course, the functions in your service can also be `async`.
+
+Create a server with a route to handle the API requests:
+
+```ts
+// server/index.ts
+
+import express from "express";
+import { rpcHandler } from "typed-rpc/express";
+import { myService } from "./myService.ts";
 
 const app = express();
 app.use(express.json());
-
-app.post("/api", rpcHandler(new MyServiceImpl()));
-
+app.post("/api", rpcHandler(myService));
 app.listen(3000);
 ```
 
-## Advanced Usage
+> **Note**
+> You can also use typed-rpc in servers other than Express.
+> Check out to docs below for [examples](#support-for-other-runtimes).
 
-### Accessing the request
+On the client-side, import the shared type and create a typed `rpcClient` with it:
 
-Sometimes it's necessary to access the request object inside the service. This can be done by passing a _ServiceFactory_, e.g. a function that creates a service for each request:
+```ts
+// client/index.ts
+
+import { rpcClient } from "typed-rpc";
+
+// Import the type (not the implementation!)
+import type { MyService } from "../server/myService";
+
+// Create a typed client:
+const client = rpcClient<MyService>("http://localhost:3000/api");
+
+// Call a remote method:
+console.log(await client.hello("world"));
+```
+
+That's all it takes to create a type-safe JSON-RPC API. 🎉
+
+## Demo
+
+You can play with a live example over at StackBlitz:
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-express?file=client%2Fmain.ts)
+
+# Advanced Usage
+
+## Accessing the request
+
+Sometimes it's necessary to access the request object inside the service. A common pattern is to define the service as `class` and create a new instance for each request:
+
+```ts
+export class MyServiceImpl {
+  /**
+   * Create a new service instance for the given request headers.
+   */
+  constructor(private headers: Record<string, string | string[]>) {}
+
+  /**
+   * Echo the request header with the specified name.
+   */
+  async echoHeader(name: string) {
+    return this.headers[name.toLowerCase()];
+  }
+}
+
+export type MyService = typeof MyServiceImpl;
+```
+
+Then, in your server, pass a _function_ to `rpcHandler` that creates a service instance with the headers taken from the incoming request:
 
 ```ts
 app.post(
   "/api",
-  rpcHandler((req) => new MyServiceImpl(req.user))
+  rpcHandler((req) => new MyService(req.user))
 );
 ```
 
-### Excluding methods
+## Sending custom headers
 
-If you don't want to proxy all methods to the server you can provide a second argument with local method overrides:
-
-```ts
-const client = rpcClient<MyService>(apiUrl, {
-  hello() {
-    return "override";
-  },
-});
-const result = await client.hello("world");
-// result === "override"
-```
-
-### Custom headers
-
-You can set custom request headers by providing a `getHeaders` function:
+A client can send custom request headers by providing a `getHeaders` function:
 
 ```ts
 const client = rpcClient<MyService>(apiUrl, {
@@ -96,27 +127,52 @@ const client = rpcClient<MyService>(apiUrl, {
 });
 ```
 
-### Mixins
+> **Note**
+> The `getHeaders` function can also be `async`.
 
-Sometimes it can be useful to mix in additional methods, for example to configure the custom headers:
+## CORS credentials
+
+To include credentials in cross-origin requests, pass `credentials: 'include'` as option.
+
+## Support for other runtimes
+
+The generic `typed-rpc/server` package can be used with any server (or edge) runtime.
+Here is an example for a [Cloudflare Worker](https://workers.cloudflare.com/):
 
 ```ts
-const config = {
-  auth: "",
-  setAuth(auth: string) {
-    this.auth = auth;
-  },
-  getHeaders() {
-    if (!this.auth) return;
-    return {
-      Authorization: this.auth,
-    };
+import { handleRpc } from "typed-rpc/server";
+import { myService } from "./myService";
+
+export default {
+  async fetch(request: Request) {
+    const json = await request.json();
+    const data = await handleRpc(json, service);
+    return event.respondWith(
+      new Response(JSON.stringify(data), {
+        headers: {
+          "content-type": "application/json;charset=UTF-8",
+        },
+      })
+    );
   },
 };
-
-const client = rpcClient<MyService, typeof config>(apiUrl, config);
-client.setAuth("secret");
 ```
+
+## Runtime type checking
+
+> **Warning**
+> Keep in mind that `typed-rpc` does not perform any runtime type checks.
+
+This is usually not an issue as long as your service can handle this gracefully.
+If you want, you can use a library like [io-ts](https://gcanti.github.io/io-ts/)
+or [ts-runtime](https://fabiandev.github.io/ts-runtime/) to make sure that the
+arguments you receive match the expected type.
+
+## React hooks
+
+While `typed-rpc` itself does not provide any built-in UI framework integrations,
+you an pair it with [react-api-query](https://www.npmjs.com/package/react-api-query),
+a thin wrapper around _TanStack Query_.
 
 # License
 

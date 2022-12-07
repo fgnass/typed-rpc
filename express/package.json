@@ -1,0 +1,5 @@
+{
+  "internal": true,
+  "main": "../lib/express.js",
+  "types": "../lib/express.d.ts"
+}

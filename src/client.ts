@@ -11,21 +11,28 @@ export class RpcError extends Error {
   }
 }
 
-type Overrides = Record<string, any> & {
+type RpcOptions = {
+  credentials?: RequestCredentials;
   getHeaders?():
     | Record<string, string>
     | Promise<Record<string, string>>
     | undefined;
 };
 
-export function rpcClient<T extends object, O extends Overrides = {}>(
-  url: string,
-  overrides?: O
-) {
+type Promisify<T> = T extends (...args: any[]) => Promise<any>
+  ? T // already a promise
+  : T extends (...args: infer A) => infer R
+  ? (...args: A) => Promise<R>
+  : T; // not a function;
+
+type PromisifyMethods<T extends object> = {
+  [K in keyof T]: Promisify<T[K]>;
+};
+
+export function rpcClient<T extends object>(url: string, options?: RpcOptions) {
   const request = async (method: string, params: any[]) => {
     const id = Date.now();
-    const headers =
-      overrides && overrides.getHeaders ? await overrides.getHeaders() : {};
+    const headers = options?.getHeaders ? await options.getHeaders() : {};
 
     const res = await fetch(url, {
       method: "POST",
@@ -40,7 +47,7 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
         method,
         params: removeTrailingUndefs(params),
       }),
-      credentials: "include",
+      credentials: options?.credentials,
     });
     if (!res.ok) {
       throw new RpcError(res.statusText, res.status);
@@ -53,24 +60,19 @@ export function rpcClient<T extends object, O extends Overrides = {}>(
     return result;
   };
 
-  const target = overrides || {};
-  return new Proxy(target, {
-    get(target, prop, receiver) {
-      if (Reflect.has(target, prop)) {
-        return Reflect.get(target, prop, receiver);
-      }
-      if (isRemote(prop)) {
+  return new Proxy(
+    {},
+    {
+      /* istanbul ignore next */
+      get(target, prop, receiver) {
+        if (typeof prop === "symbol") return;
+        if (prop.startsWith("$")) return;
+        if (prop in Object.prototype) return;
+        if (prop === "toJSON") return;
         return (...args: any) => request(prop.toString(), args);
-      }
-    },
-  }) as T & O;
-}
-
-function isRemote(prop: string | symbol) {
-  if (typeof prop === "symbol") return false;
-  if (prop.startsWith("$")) return false;
-  if (prop === "constructor") return false;
-  return true;
+      },
+    }
+  ) as PromisifyMethods<T>;
 }
 
 function removeTrailingUndefs(values: any[]) {

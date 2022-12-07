@@ -1,51 +1,24 @@
 import { rpcClient, RpcError } from "../client.js";
-import { MyService } from "./MyService.js";
+import { Service } from "./service.js";
 import tap from "tap";
 import "isomorphic-fetch";
 
 const apiUrl = process.env.SERVER_URL + "/api";
 
-tap.test("should talk to server", async (t) => {
-  const client = rpcClient<MyService>(apiUrl);
+tap.test("should talk to the server", async (t) => {
+  const client = rpcClient<Service>(apiUrl);
   const result = await client.hello("world");
   t.equal(result, "Hello world!");
 });
 
 tap.test("should omit trailing undefined params", async (t) => {
-  const client = rpcClient<MyService>(apiUrl);
-  const result = await client.optional("hello", undefined);
-  t.equal(result, "hello undefined!");
-});
-
-tap.test("should override methods", async (t) => {
-  const client = rpcClient<MyService>(apiUrl, {
-    hello() {
-      return "override";
-    },
-  });
-  const result = await client.hello("world");
-  t.equal(result, "override");
-});
-
-tap.test("should add additional methods", (t) => {
-  const locals = {
-    goodbye() {
-      return "Bye!";
-    },
-  };
-  const client = rpcClient<MyService, typeof locals>(apiUrl, locals);
-  t.equal(client.goodbye(), "Bye!");
-  t.end();
-});
-
-tap.test("should throw on errors", async (t) => {
-  const client = rpcClient<MyService>(apiUrl);
-  const promise = client.sorry("Dave");
-  t.rejects(promise, new RpcError("Sorry Dave.", -32000));
+  const client = rpcClient<Service>(apiUrl);
+  const result = await client.greet("hello", undefined);
+  t.equal(result, "hello world!");
 });
 
 tap.test("should override headers", async (t) => {
-  const client = rpcClient<MyService>(apiUrl, {
+  const client = rpcClient<Service>(apiUrl, {
     getHeaders() {
       return {
         "Prefer-Status": "400",
@@ -56,27 +29,8 @@ tap.test("should override headers", async (t) => {
   t.rejects(promise, new RpcError("Bad Request", 400));
 });
 
-tap.test("should access this in overrides", async (t) => {
-  const overrides = {
-    status: "",
-    setStatus(status: number) {
-      this.status = status.toString();
-    },
-    getHeaders() {
-      if (!this.status) return;
-      return {
-        "Prefer-Status": this.status,
-      };
-    },
-  };
-  const client = rpcClient<MyService, typeof overrides>(apiUrl, overrides);
-  client.setStatus(404);
-  const promise = client.hello("world");
-  t.rejects(promise, new RpcError("Not Found", 404));
-});
-
 tap.test("should echo headers", async (t) => {
-  const client = rpcClient<MyService>(
+  const client = rpcClient<Service>(
     process.env.SERVER_URL + "/request-aware-api",
     {
       getHeaders() {
@@ -88,4 +42,10 @@ tap.test("should echo headers", async (t) => {
   );
   const res = await client.echoHeader("X-Hello");
   t.equal(res, "world");
+});
+
+tap.test("should throw on errors", async (t) => {
+  const client = rpcClient<Service>(apiUrl);
+  const promise = client.sorry("Dave");
+  t.rejects(promise, new RpcError("Sorry Dave.", -32000));
 });

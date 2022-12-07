@@ -1,11 +1,17 @@
 {
   "name": "typed-rpc",
-  "version": "2.3.0",
+  "version": "3.0.0-next.4",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
+  "keywords": [
+    "rpc",
+    "json-rpc",
+    "typescript"
+  ],
   "main": "./lib/client.js",
   "files": [
     "lib",
-    "server"
+    "server",
+    "express"
   ],
   "scripts": {
     "build": "rm -rf lib && tsc",
@@ -18,7 +24,6 @@
   "repository": "fgnass/typed-rpc",
   "license": "MIT",
   "devDependencies": {
-    "@types/body-parser": "^1.19.0",
     "@types/express": "^4.17.11",
     "@types/isomorphic-fetch": "0.0.35",
     "@types/tap": "^15.0.1",

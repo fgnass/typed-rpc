@@ -1,6 +1,7 @@
 import express from "express";
-import { rpcHandler } from "../server.js";
-import { MyServiceImpl } from "./MyServiceImpl.js";
+import { rpcHandler } from "../express.js";
+import { service } from "./service.js";
+import { RequestAwareService } from "./RequestAwareService.js";
 
 const app = express();
 
@@ -12,11 +13,11 @@ app.use("/api", (req, res, next) => {
   else next();
 });
 
-app.post("/api", rpcHandler(new MyServiceImpl()));
+app.post("/api", rpcHandler(service));
 
 app.post(
   "/request-aware-api",
-  rpcHandler((req) => new MyServiceImpl(req.headers))
+  rpcHandler((req) => new RequestAwareService(req.headers))
 );
 
 const port = process.env.PORT || 3000;
