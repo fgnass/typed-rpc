@@ -13,14 +13,14 @@ that comes with the following features and non-features:
 - 🚫 No code generation step
 - 🚫 No dependencies
 - 🚫 No batch requests
-- 🚫 No other transports other than HTTP(S)
+- 🚫 No transports other than HTTP(S)
 - 🚫 No runtime type-checking
 - 🚫 No IE11 support
 - 🥱 No fancy project page, just this README
 
 ## Philosophy
 
-The philosophy of `typed-rpc` is to strictly focus on the core functionality and keep things as simple as possible. The whole library basically consists of two files, one for the client and one for the server.
+The philosophy of `typed-rpc` is to strictly focus on the core functionality and keep things as [simple](#basic-usage) as possible. The whole library basically consists of two files, one for the client and one for the server.
 
 You won't find any unnecessarily complex concepts like middlewares, adapters, resolvers, transformers, queries or mutations.
 
