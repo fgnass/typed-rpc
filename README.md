@@ -170,17 +170,25 @@ export default {
 };
 ```
 
+### Deno
+
 🦕 You can also use `typed-rpc` in Deno like in this [example](https://github.com/fgnass/typed-rpc-deno-example).
 
 > **Note**
 > This package is also published under https://deno.land/x/typed_rpc
+
+### Next.js
+
+Here's an example that uses `typed-rpc` in a Next.js project:
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-nextjs?file=pages%2Findex.tsx)
 
 ## Runtime type checking
 
 > **Warning**
 > Keep in mind that `typed-rpc` does not perform any runtime type checks.
 
-This is usually not an issue as long as your service can handle this gracefully.
+This is usually not an issue, as long as your service can handle this gracefully.
 If you want, you can use a library like [io-ts](https://gcanti.github.io/io-ts/)
 or [ts-runtime](https://fabiandev.github.io/ts-runtime/) to make sure that the
 arguments you receive match the expected type.
