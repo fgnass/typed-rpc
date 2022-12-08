@@ -11,12 +11,24 @@ that comes with the following features and non-features:
 - 🪶 Tiny footprint (< 1kB)
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
+- 🚫 No dependencies
 - 🚫 No batch requests
 - 🚫 No other transports other than HTTP(S)
 - 🚫 No runtime type-checking
 - 🚫 No IE11 support
+- 🥱 No fancy project page, just this README
 
-## Usage
+## Philosophy
+
+The philosophy of `typed-rpc` is to strictly focus on the core functionality and keep things as simple as possible. The whole library basically consists of two files, one for the client and one for the server.
+
+You won't find any unnecessarily complex concepts like middlewares, adapters, resolvers, transformers, queries or mutations.
+
+(If you want queries and mutations though, [we've got you covered](#react-hooks).)
+
+And instead of having adapters for all the different servers, meta frameworks or edge runtimes, we provide a generic package that is request/response agnostic and leave the wiring [up to the user](#support-for-other-runtimes).
+
+## Basic Usage
 
 Create a _service_ in your backend and export its type, so that the
 frontend can access type information:
@@ -158,6 +170,11 @@ export default {
 };
 ```
 
+🦕 You can also use `typed-rpc` in Deno like in this [example](https://github.com/fgnass/typed-rpc-deno-example).
+
+> **Note**
+> This package is also published under https://deno.land/x/typed_rpc
+
 ## Runtime type checking
 
 > **Warning**
@@ -171,8 +188,8 @@ arguments you receive match the expected type.
 ## React hooks
 
 While `typed-rpc` itself does not provide any built-in UI framework integrations,
-you an pair it with [react-api-query](https://www.npmjs.com/package/react-api-query),
-a thin wrapper around _TanStack Query_.
+you can pair it with [react-api-query](https://www.npmjs.com/package/react-api-query),
+a thin wrapper around _TanStack Query_. A type-safe match made in heaven. 💕
 
 # License
 
