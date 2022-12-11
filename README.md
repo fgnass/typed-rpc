@@ -148,8 +148,41 @@ To include credentials in cross-origin requests, pass `credentials: 'include'` a
 
 ## Support for other runtimes
 
-The generic `typed-rpc/server` package can be used with any server (or edge) runtime.
-Here is an example for a [Cloudflare Worker](https://workers.cloudflare.com/):
+The generic `typed-rpc/server` package can be used with any server framework or (edge-) runtime.
+
+### Fastify
+
+With [Fastify](https://www.fastify.io/), you would use `typed-rpc` like this:
+
+```ts
+import { handleRpc, isJsonRpcRequest } from "typed-rpc/server";
+
+fastify.post("/api", async (req, reply) => {
+  if (isJsonRpcRequest(req.body)) {
+    const res = await handleRpc(req.body, new Service(req.headers));
+    reply.send(res);
+  }
+});
+```
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-fastify?file=server%2Findex.ts)
+
+### Deno
+
+🦕 You can also use `typed-rpc` in Deno like in this [example](https://github.com/fgnass/typed-rpc-deno-example).
+
+> **Note**
+> This package is also published under https://deno.land/x/typed_rpc
+
+### Next.js
+
+Here's an example that uses `typed-rpc` in a Next.js project:
+
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-nextjs?file=pages%2Findex.tsx)
+
+### Clodflare Workers
+
+In a [Cloudflare Worker](https://workers.cloudflare.com/) you can use `typed-rpc` like this:
 
 ```ts
 import { handleRpc } from "typed-rpc/server";
@@ -169,19 +202,6 @@ export default {
   },
 };
 ```
-
-### Deno
-
-🦕 You can also use `typed-rpc` in Deno like in this [example](https://github.com/fgnass/typed-rpc-deno-example).
-
-> **Note**
-> This package is also published under https://deno.land/x/typed_rpc
-
-### Next.js
-
-Here's an example that uses `typed-rpc` in a Next.js project:
-
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/typed-rpc-nextjs?file=pages%2Findex.tsx)
 
 ## Runtime type checking
 
