@@ -17,7 +17,7 @@ export const service = {
 
   recurse: {
     method() {
-      return 'recurse.method'
+      return 'recurse.method';
     }
   }
 };

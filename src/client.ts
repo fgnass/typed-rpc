@@ -88,11 +88,11 @@ export function rpcClient<T extends object>(url: string, options?: RpcOptions) {
 
 /* istanbul ignore next */
 function isValidProp(prop: string | symbol): prop is string {
-  if (typeof prop === "symbol") return false
-  if (prop.startsWith("$")) return false
-  if (prop in Object.prototype) return false
-  if (prop === "toJSON") return false
-  return true
+  if (typeof prop === "symbol") return false;
+  if (prop.startsWith("$")) return false;
+  if (prop in Object.prototype) return false;
+  if (prop === "toJSON") return false;
+  return true;
 }
 
 function removeTrailingUndefs(values: any[]) {
