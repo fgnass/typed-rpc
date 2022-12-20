@@ -49,3 +49,9 @@ tap.test("should throw on errors", async (t) => {
   const promise = client.sorry("Dave");
   t.rejects(promise, new RpcError("Sorry Dave.", -32000));
 });
+
+tap.test("should support recursion on property access", async (t) => {
+  const client = rpcClient<Service>(apiUrl);
+  const result = await client.recurse.method();
+  t.equal(result, "recurse.method");
+});

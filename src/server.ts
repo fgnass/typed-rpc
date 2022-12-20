@@ -90,7 +90,12 @@ export async function handleRpc(
       error: { code: -32600, message: "Invalid Request" },
     };
   }
-  const { jsonrpc, method, params } = request;
+  const { jsonrpc, params } = request;
+  const path = request.method.split('.');
+  const method = path.pop()!;
+  for (const property of path)
+    if (hasProperty(service, property))
+      service = service[property] as object;
   if (!hasMethod(service, method)) {
     console.log("Method %s not found", method, service);
     return {

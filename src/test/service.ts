@@ -14,6 +14,12 @@ export const service = {
   echoHeader(name: string): string | string[] | undefined {
     throw new Error("This service can't access request headers");
   },
+
+  recurse: {
+    method() {
+      return 'recurse.method'
+    }
+  }
 };
 
 export type Service = typeof service;

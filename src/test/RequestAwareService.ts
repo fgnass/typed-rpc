@@ -23,4 +23,12 @@ export class RequestAwareService implements Service {
   echoHeader(name: string) {
     return this.headers?.[name.toLowerCase()];
   }
+
+  get recurse() {
+    return {
+      method() {
+        return 'recurse.method';
+      }
+    }
+  }
 }

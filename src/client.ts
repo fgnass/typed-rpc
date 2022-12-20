@@ -23,6 +23,8 @@ type Promisify<T> = T extends (...args: any[]) => Promise<any>
   ? T // already a promise
   : T extends (...args: infer A) => infer R
   ? (...args: A) => Promise<R>
+  : T extends object
+  ? PromisifyMethods<T>
   : T; // not a function;
 
 type PromisifyMethods<T extends object> = {
@@ -60,19 +62,37 @@ export function rpcClient<T extends object>(url: string, options?: RpcOptions) {
     return result;
   };
 
+  
+  function get(prop: string): any {
+    return new Proxy(
+      (...args: any) => request(prop.toString(), args),
+      {
+        get(_, childProp) {
+          if (isValidProp(childProp))
+            return get(`${prop}.${childProp}`);
+        }
+      }
+    )
+  }
+
   return new Proxy(
     {},
     {
-      /* istanbul ignore next */
-      get(target, prop, receiver) {
-        if (typeof prop === "symbol") return;
-        if (prop.startsWith("$")) return;
-        if (prop in Object.prototype) return;
-        if (prop === "toJSON") return;
-        return (...args: any) => request(prop.toString(), args);
-      },
+      get(_, prop) {
+        if (isValidProp(prop))
+          return get(prop);
+      }
     }
   ) as PromisifyMethods<T>;
+}
+
+/* istanbul ignore next */
+function isValidProp(prop: string | symbol): prop is string {
+  if (typeof prop === "symbol") return false
+  if (prop.startsWith("$")) return false
+  if (prop in Object.prototype) return false
+  if (prop === "toJSON") return false
+  return true
 }
 
 function removeTrailingUndefs(values: any[]) {
