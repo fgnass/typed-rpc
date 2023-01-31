@@ -121,7 +121,7 @@ Then, in your server, pass a _function_ to `rpcHandler` that creates a service i
 ```ts
 app.post(
   "/api",
-  rpcHandler((req) => new MyService(req.user))
+  rpcHandler((req) => new MyService(req.headers))
 );
 ```
 
