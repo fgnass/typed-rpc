@@ -6,7 +6,7 @@ export class RpcError extends Error {
     super(message);
     this.code = code;
     this.data = data;
-    //https://github.com/Microsoft/TypeScript/wiki/Breaking-Changes#extending-built-ins-like-error-array-and-map-may-no-longer-work
+    // https://www.typescriptlang.org/docs/handbook/2/classes.html#inheriting-built-in-types
     Object.setPrototypeOf(this, RpcError.prototype);
   }
 }
