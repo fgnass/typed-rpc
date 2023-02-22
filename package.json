@@ -18,7 +18,7 @@
     "start": "node lib/test/server",
     "pretest": "npm run build",
     "test": "with-server tap lib/test/client.js",
-    "prepare": "npm run build"
+    "prepare": "npm install && npm run build"
   },
   "author": "Felix Gnass <fgnass@gmail.com>",
   "repository": "fgnass/typed-rpc",
