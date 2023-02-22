@@ -11,7 +11,14 @@ export class RpcError extends Error {
   }
 }
 
-type RpcOptions = {
+type RpcOptions =
+  | FetchOptions
+  | {
+      request: (method: string, params: any[]) => Promise<any>;
+    };
+
+type FetchOptions = {
+  url: string;
   credentials?: RequestCredentials;
   getHeaders?():
     | Record<string, string>
@@ -29,36 +36,14 @@ type PromisifyMethods<T extends object> = {
   [K in keyof T]: Promisify<T[K]>;
 };
 
-export function rpcClient<T extends object>(url: string, options?: RpcOptions) {
-  const request = async (method: string, params: any[]) => {
-    const id = Date.now();
-    const headers = options?.getHeaders ? await options.getHeaders() : {};
+export function rpcClient<T extends object>(options: RpcOptions) {
+  let request: (method: string, params: any[]) => Promise<any>;
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        Accept: "application/json",
-        "Content-Type": "application/json",
-        ...headers,
-      },
-      body: JSON.stringify({
-        jsonrpc: "2.0",
-        id,
-        method,
-        params: removeTrailingUndefs(params),
-      }),
-      credentials: options?.credentials,
-    });
-    if (!res.ok) {
-      throw new RpcError(res.statusText, res.status);
-    }
-    const { result, error } = await res.json();
-    if (error) {
-      const { code, message, data } = error;
-      throw new RpcError(message, code, data);
-    }
-    return result;
-  };
+  if ("request" in options) {
+    request = options.request;
+  } else {
+    request = fetchRequest.bind(null, options);
+  }
 
   return new Proxy(
     {},
@@ -75,7 +60,40 @@ export function rpcClient<T extends object>(url: string, options?: RpcOptions) {
   ) as PromisifyMethods<T>;
 }
 
-function removeTrailingUndefs(values: any[]) {
+async function fetchRequest(
+  options: FetchOptions,
+  method: string,
+  params: any[]
+): Promise<any> {
+  const id = Date.now();
+  const headers = options?.getHeaders ? await options.getHeaders() : {};
+  const res = await fetch(options.url, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/json",
+      ...headers,
+    },
+    body: JSON.stringify({
+      jsonrpc: "2.0",
+      id,
+      method,
+      params: removeTrailingUndefs(params),
+    }),
+    credentials: options?.credentials,
+  });
+  if (!res.ok) {
+    throw new RpcError(res.statusText, res.status);
+  }
+  const { result, error } = await res.json();
+  if (error) {
+    const { code, message, data } = error;
+    throw new RpcError(message, code, data);
+  }
+  return result;
+}
+
+export function removeTrailingUndefs(values: any[]) {
   const a = [...values];
   while (a.length && a[a.length - 1] === undefined) a.length--;
   return a;
