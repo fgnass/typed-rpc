@@ -77,9 +77,15 @@ function getRequestId(req: unknown) {
   return null;
 }
 
+export interface RpcHandlerOptions {
+  getErrorCode?: (err: unknown) => number;
+  getErrorMessage?: (err: unknown) => string;
+}
+
 export async function handleRpc(
   request: JsonRpcRequest,
-  service: object
+  service: object,
+  options?: RpcHandlerOptions,
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
   const id = getRequestId(request);
   if (!isJsonRpcRequest(request)) {
@@ -107,8 +113,8 @@ export async function handleRpc(
       jsonrpc,
       id,
       error: {
-        code: getErrorCode(err),
-        message: getErrorMessage(err),
+        code: (options?.getErrorCode ?? getErrorCode)(err),
+        message: (options?.getErrorMessage ?? getErrorMessage)(err),
       },
     };
   }
