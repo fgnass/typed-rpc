@@ -20,6 +20,14 @@ app.post(
   rpcHandler((req) => new RequestAwareService(req.headers))
 );
 
+app.post(
+  "/error-masked-api",
+  rpcHandler(service, {
+    getErrorMessage: (error: unknown) => "Something went wrong",
+    getErrorCode: (error: unknown) => 100
+  })
+)
+
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
   console.log("Server listening on http://localhost:%s", port);

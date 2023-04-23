@@ -49,3 +49,11 @@ tap.test("should throw on errors", async (t) => {
   const promise = client.sorry("Dave");
   t.rejects(promise, new RpcError("Sorry Dave.", -32000));
 });
+
+tap.test("should use custom error message if configured", async (t) => {
+  const client = rpcClient<Service>(
+    process.env.SERVER_URL + "/error-masked-api"
+  );
+  const promise = client.sorry("Dave");
+  t.rejects(promise, new RpcError("Something went wrong", 100));
+})
