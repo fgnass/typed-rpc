@@ -49,3 +49,24 @@ tap.test("should throw on errors", async (t) => {
   const promise = client.sorry("Dave");
   t.rejects(promise, new RpcError("Sorry Dave.", -32000));
 });
+
+tap.test("should return a date", async (t) => {
+	const client = rpcClient<Service>(apiUrl);
+	const d = new Date();
+	const result = await client.returnDate(d.toISOString());
+	t.equal(result.toISOString(), d.toISOString())
+});
+
+tap.test("should receive a date and return full year", async (t) => {
+	const client = rpcClient<Service>(apiUrl);
+	const d = new Date();
+	const result = await client.receiveDate(d);
+	t.equal(result, d.getFullYear())
+});
+
+tap.test("should return a Set", async (t) => {
+	const client = rpcClient<Service>(apiUrl);
+	const list = ["foo", "bar", "baz", "foo", "bar"]
+	const result = await client.returnSet(list);
+	t.equal(result.size, 3)
+});

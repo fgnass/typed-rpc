@@ -23,4 +23,16 @@ export class RequestAwareService implements Service {
   echoHeader(name: string) {
     return this.headers?.[name.toLowerCase()];
   }
+
+  returnDate(s: string): Date {
+	return new Date(s);
+  }
+
+  receiveDate(s: Date): number {
+	return s.getFullYear();
+  }
+
+  returnSet(s: string[]): Set<string> {
+	return new Set(s);
+  }
 }
