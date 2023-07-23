@@ -1,0 +1,28 @@
+# top-most EditorConfig file
+root = true
+
+# Unix-style newlines with a newline ending every file
+[*]
+end_of_line = lf
+insert_final_newline = true
+charset = utf-8
+
+[*.{json,yaml,yml}]
+indent_style = space
+indent_size = 2
+trim_trailing_whitespace = true
+
+[*.{js,cjs,ts,tsx,jsx,svelte}]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{css,scss,less,postcss,pcss}]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
+
+[*.{html,htm,xml,svg}]
+indent_style = tab
+indent_size = 4
+trim_trailing_whitespace = true
