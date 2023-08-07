@@ -65,7 +65,7 @@ app.listen(3000);
 
 > **Note**
 > You can also use typed-rpc in servers other than Express.
-> Check out to docs below for [examples](#support-for-other-runtimes).
+> Check out the docs below for [examples](#support-for-other-runtimes).
 
 On the client-side, import the shared type and create a typed `rpcClient` with it:
 
@@ -130,7 +130,8 @@ app.post(
 A client can send custom request headers by providing a `getHeaders` function:
 
 ```ts
-const client = rpcClient<MyService>(apiUrl, {
+const client = rpcClient<MyService>({
+  url: "http://localhost:3000/api",
   getHeaders() {
     return {
       Authorization: auth,
@@ -145,6 +146,23 @@ const client = rpcClient<MyService>(apiUrl, {
 ## CORS credentials
 
 To include credentials in cross-origin requests, pass `credentials: 'include'` as option.
+
+## Custom transport
+
+By default, the client uses the global `fetch` implementation to perform requests. If you want to use a different mechanism, you can specify custom transport:
+
+```ts
+const client = rpcClient<MyService>({
+  transport: async (req: JsonRpcRequest) => {
+    return {
+      error: null,
+      result: {
+        /* ... */
+      },
+    };
+  },
+});
+```
 
 ## Support for other runtimes
 
@@ -208,10 +226,10 @@ export default {
 > **Warning**
 > Keep in mind that `typed-rpc` does not perform any runtime type checks.
 
-This is usually not an issue, as long as your service can handle this gracefully.
-If you want, you can use a library like [io-ts](https://gcanti.github.io/io-ts/)
-or [ts-runtime](https://fabiandev.github.io/ts-runtime/) to make sure that the
-arguments you receive match the expected type.
+This is usually not an issue, as long as your service can handle this
+gracefully. If you want, you can use a library like
+[type-assurance](https://github.com/fgnass/type-assurance)
+to make sure that the arguments you receive match the expected type.
 
 ## React hooks
 

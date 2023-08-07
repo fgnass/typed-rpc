@@ -1,26 +1,8 @@
-export interface JsonRpcRequest {
-  jsonrpc: "2.0";
-  id?: string | number | null;
-  method: string;
-  params: any[];
-}
-
-export interface JsonRpcResponse {
-  jsonrpc: "2.0";
-  id?: string | number | null;
-}
-
-export interface JsonRpcErrorResponse extends JsonRpcResponse {
-  error: {
-    code: number;
-    message: string;
-    data?: any;
-  };
-}
-
-export interface JsonRpcSuccessResponse extends JsonRpcResponse {
-  result: any;
-}
+import {
+  JsonRpcRequest,
+  JsonRpcErrorResponse,
+  JsonRpcSuccessResponse,
+} from "./types";
 
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
