@@ -53,6 +53,7 @@ tap.test("should support custom transports", async (t) => {
   const client = rpcClient<Service>({
     transport: async (req) => {
       return {
+        jsonrpc: "2.0",
         result: "Custom!",
       };
     },

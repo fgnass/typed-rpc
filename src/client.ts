@@ -1,5 +1,8 @@
 import { JsonRpcRequest, JsonRpcResponse } from "./types";
 
+/**
+ * Error class that is thrown if a remote method returns an error.
+ */
 export class RpcError extends Error {
   code: number;
   data?: unknown;
@@ -13,9 +16,13 @@ export class RpcError extends Error {
   }
 }
 
-export type RpcTransport = (req: JsonRpcRequest) => Promise<any>;
+/**
+ * Interface for custom transports. Implementations are expected to serialize
+ * the given request and return an object that is a JsonRpcResponse.
+ */
+export type RpcTransport = (req: JsonRpcRequest) => Promise<JsonRpcResponse>;
 
-type RpcOptions =
+type RpcClientOptions =
   | string
   | FetchOptions
   | {
@@ -41,7 +48,7 @@ type PromisifyMethods<T extends object> = {
   [K in keyof T]: Promisify<T[K]>;
 };
 
-export function rpcClient<T extends object>(options: RpcOptions) {
+export function rpcClient<T extends object>(options: RpcClientOptions) {
   if (typeof options === "string") {
     options = { url: options };
   }
@@ -58,14 +65,14 @@ export function rpcClient<T extends object>(options: RpcOptions) {
         if (prop in Object.prototype) return;
         if (prop === "toJSON") return;
         return async (...args: any) => {
-          const { error, result } = await transport(
-            createRequest(prop.toString(), args)
-          );
-          if (error) {
-            const { code, message, data } = error;
+          const res = await transport(createRequest(prop.toString(), args));
+          if ("result" in res) {
+            return res.result;
+          } else if ("error" in res) {
+            const { code, message, data } = res.error;
             throw new RpcError(message, code, data);
           }
-          return result;
+          throw new TypeError("Invalid response");
         };
       },
     }

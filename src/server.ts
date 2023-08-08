@@ -59,9 +59,43 @@ function getRequestId(req: unknown) {
   return null;
 }
 
-export async function handleRpc(
+/**
+ * Valid RPC return types that can be serialized.
+ */
+export type RpcResult =
+  | string
+  | number
+  | boolean
+  | null
+  | undefined
+  | void
+  | RpcResult[]
+  | { [key: string]: RpcResult };
+
+/**
+ * Signature that all RPC methods must adhere to.
+ */
+export type RpcMethod = (...args: any[]) => RpcResult | Promise<RpcResult>;
+
+/**
+ * Conditional type to verify a given type is a valid RPC method.
+ */
+type ValidMethod<T> = T extends RpcMethod ? T : never;
+
+/**
+ * Conditional type to verify that a function is also a valid RPC method.
+ */
+type RpcServiceProp<T> = T extends (...args: any) => any ? ValidMethod<T> : T;
+
+/**
+ * Type for RPC services that makes sure that all return values can
+ * be serialized.
+ */
+export type RpcService<T> = { [K in keyof T]: RpcServiceProp<T[K]> };
+
+export async function handleRpc<T extends RpcService<T>>(
   request: JsonRpcRequest,
-  service: object
+  service: T
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
   const id = getRequestId(request);
   if (!isJsonRpcRequest(request)) {
@@ -82,7 +116,7 @@ export async function handleRpc(
     };
   }
   try {
-    const result = await service[method](...params);
+    const result = await service[method as keyof T](...params);
     return { jsonrpc, id, result };
   } catch (err) {
     return {

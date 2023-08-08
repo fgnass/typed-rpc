@@ -1,12 +1,11 @@
 import type { Request, RequestHandler } from "express";
-import { handleRpc } from "./server";
+import { RpcService, handleRpc } from "./server";
 
+export type RpcServiceFactory<T> = (req: Request) => RpcService<T>;
 
-export interface ServiceFactory {
-  (req: Request): object;
-}
-
-export function rpcHandler(serviceOrFactory: object | ServiceFactory) {
+export function rpcHandler<T extends RpcService<T>>(
+  serviceOrFactory: T | RpcServiceFactory<T>
+) {
   const handler: RequestHandler = (req, res, next) => {
     const service =
       typeof serviceOrFactory === "function"
