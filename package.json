@@ -1,6 +1,6 @@
 {
   "name": "typed-rpc",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "description": "Lightweight JSON-RPC solution for TypeScript projects",
   "keywords": [
     "rpc",
