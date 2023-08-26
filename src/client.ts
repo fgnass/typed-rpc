@@ -20,7 +20,10 @@ export class RpcError extends Error {
  * Interface for custom transports. Implementations are expected to serialize
  * the given request and return an object that is a JsonRpcResponse.
  */
-export type RpcTransport = (req: JsonRpcRequest) => Promise<JsonRpcResponse>;
+export type RpcTransport = (
+  req: JsonRpcRequest,
+  abortSignal: AbortSignal
+) => Promise<JsonRpcResponse>;
 
 type RpcClientOptions =
   | string
@@ -55,28 +58,61 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
   const transport =
     "transport" in options ? options.transport : fetchTransport(options);
 
-  return new Proxy(
-    {},
-    {
-      /* istanbul ignore next */
-      get(target, prop, receiver) {
-        if (typeof prop === "symbol") return;
-        if (prop.startsWith("$")) return;
-        if (prop in Object.prototype) return;
-        if (prop === "toJSON") return;
-        return async (...args: any) => {
-          const res = await transport(createRequest(prop.toString(), args));
-          if ("result" in res) {
-            return res.result;
-          } else if ("error" in res) {
-            const { code, message, data } = res.error;
-            throw new RpcError(message, code, data);
-          }
-          throw new TypeError("Invalid response");
-        };
-      },
+  /**
+   * Send a request using the configured transport and handle the result.
+   */
+  const sendRequest = async (
+    method: string,
+    args: any[],
+    signal: AbortSignal
+  ) => {
+    const res = await transport(createRequest(method, args), signal);
+    if ("result" in res) {
+      return res.result;
+    } else if ("error" in res) {
+      const { code, message, data } = res.error;
+      throw new RpcError(message, code, data);
     }
-  ) as PromisifyMethods<T>;
+    throw new TypeError("Invalid response");
+  };
+
+  // Map of AbortControllers to abort pending requests
+  const abortControllers = new WeakMap<Promise<any>, AbortController>();
+
+  const target = {
+    /**
+     * Abort the request for the given promise.
+     */
+    $abort: (promise: Promise<any>) => {
+      const ac = abortControllers.get(promise);
+      ac?.abort();
+    },
+  };
+
+  return new Proxy(target, {
+    /* istanbul ignore next */
+    get(target, prop, receiver) {
+      if (typeof prop === "symbol") return;
+      if (prop in Object.prototype) return;
+      if (prop === "toJSON") return;
+      if (Reflect.has(target, prop)) {
+        return Reflect.get(target, prop, receiver);
+      }
+      if (prop.startsWith("$")) return;
+      return (...args: any) => {
+        const ac = new AbortController();
+        const promise = sendRequest(prop.toString(), args, ac.signal);
+        abortControllers.set(promise, ac);
+        promise
+          .finally(() => {
+            // Remove the
+            abortControllers.delete(promise);
+          })
+          .catch(() => {});
+        return promise;
+      };
+    },
+  }) as typeof target & PromisifyMethods<T>;
 }
 
 /**
@@ -105,7 +141,7 @@ export function removeTrailingUndefs(values: any[]) {
  * Create a RpcTransport that uses the global fetch.
  */
 export function fetchTransport(options: FetchOptions): RpcTransport {
-  return async (req: JsonRpcRequest): Promise<any> => {
+  return async (req: JsonRpcRequest, signal: AbortSignal): Promise<any> => {
     const headers = options?.getHeaders ? await options.getHeaders() : {};
     const res = await fetch(options.url, {
       method: "POST",
@@ -116,6 +152,7 @@ export function fetchTransport(options: FetchOptions): RpcTransport {
       },
       body: JSON.stringify(req),
       credentials: options?.credentials,
+      signal,
     });
     if (!res.ok) {
       throw new RpcError(res.statusText, res.status);

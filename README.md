@@ -94,7 +94,7 @@ You can play with a live example over at StackBlitz:
 
 # Advanced Usage
 
-## Accessing the request
+## Accessing the incoming request
 
 Sometimes it's necessary to access the request object inside the service. A common pattern is to define the service as `class` and create a new instance for each request:
 
@@ -143,6 +143,17 @@ const client = rpcClient<MyService>({
 > **Note**
 > The `getHeaders` function can also be `async`.
 
+## Aborting requests
+
+You can abort requests by passing the Promise to `.$abort()` like this:
+
+```ts
+const client = rpcClient<HelloService>(url);
+
+const res = client.hello("world");
+client.$abort(res);
+```
+
 ## CORS credentials
 
 To include credentials in cross-origin requests, pass `credentials: 'include'` as option.
@@ -153,7 +164,7 @@ By default, the client uses the global `fetch` implementation to perform request
 
 ```ts
 const client = rpcClient<MyService>({
-  transport: async (req: JsonRpcRequest) => {
+  transport: async (req: JsonRpcRequest, abortSignal: AbortSignal) => {
     return {
       error: null,
       result: {

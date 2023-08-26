@@ -61,3 +61,22 @@ tap.test("should support custom transports", async (t) => {
   const result = await client.hello("world");
   t.equal(result, "Custom!");
 });
+
+tap.test("should fail on invalid response", async (t) => {
+  const client = rpcClient<Service>({
+    transport: async (req) => {
+      return {
+        invalid: "",
+      } as any;
+    },
+  });
+  const res = client.hello("world");
+  t.rejects(res);
+});
+
+tap.test("should abort", async (t) => {
+  const client = rpcClient<Service>(url);
+  const res = client.hello("world");
+  client.$abort(res);
+  t.rejects(res, { name: "AbortError" });
+});
