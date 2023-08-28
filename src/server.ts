@@ -94,7 +94,7 @@ type RpcServiceProp<T> = T extends (...args: any) => any ? ValidMethod<T> : T;
 export type RpcService<T> = { [K in keyof T]: RpcServiceProp<T[K]> };
 
 export async function handleRpc<T extends RpcService<T>>(
-  request: JsonRpcRequest,
+  request: unknown,
   service: T
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
   const id = getRequestId(request);
