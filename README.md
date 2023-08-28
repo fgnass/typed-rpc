@@ -9,11 +9,11 @@ that comes with the following features and non-features:
 - 📜 JSON-RPC 2.0 protocol
 - 🕵️ Full IDE autocompletion
 - 🪶 Tiny footprint (< 1kB)
+- 🚚 Support for custom transports
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
 - 🚫 No dependencies
 - 🚫 No batch requests
-- 🚫 No transports other than HTTP(S)
 - 🚫 No runtime type-checking
 - 🚫 No IE11 support
 - 🥱 No fancy project page, just this README
@@ -220,14 +220,12 @@ import { myService } from "./myService";
 export default {
   async fetch(request: Request) {
     const json = await request.json();
-    const data = await handleRpc(json, service);
-    return event.respondWith(
-      new Response(JSON.stringify(data), {
-        headers: {
-          "content-type": "application/json;charset=UTF-8",
-        },
-      })
-    );
+    const data = await handleRpc(json, myService);
+    return new Response(JSON.stringify(data), {
+      headers: {
+        "content-type": "application/json;charset=UTF-8",
+      },
+    });
   },
 };
 ```
