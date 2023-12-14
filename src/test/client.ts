@@ -49,6 +49,13 @@ tap.test("should throw on errors", async (t) => {
   t.rejects(promise, new RpcError("Sorry Dave.", -32000));
 });
 
+tap.test("should pass error payload to client", async (t) => {
+  const client = rpcClient<Service>({ url });
+  const data = { foo: "bar" };
+  const promise = client.sorry("Dave", data);
+  t.rejects(promise, new RpcError("Sorry Dave.", -32000, data));
+});
+
 tap.test("should support custom transports", async (t) => {
   const client = rpcClient<Service>({
     transport: async (req) => {

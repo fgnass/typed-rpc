@@ -48,6 +48,12 @@ function getErrorMessage(err: unknown) {
   return "";
 }
 
+function getErrorData(err: unknown) {
+  if (hasProperty(err, "data")) {
+    return (err.data = JSON.parse(JSON.stringify(err.data)));
+  }
+}
+
 /**
  * Returns the id or null if there is no valid id.
  */
@@ -125,6 +131,7 @@ export async function handleRpc<T extends RpcService<T>>(
       error: {
         code: getErrorCode(err),
         message: getErrorMessage(err),
+        data: getErrorData(err),
       },
     };
   }

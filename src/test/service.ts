@@ -7,8 +7,12 @@ export const service = {
     return `${hello} ${name}!`;
   },
 
-  sorry(name: string): string {
-    throw new Error(`Sorry ${name}.`);
+  sorry(name: string, data?: unknown): string {
+    const err = new Error(`Sorry ${name}.`);
+    if (data) {
+      (err as any).data = data;
+    }
+    throw err;
   },
 
   echoHeader(name: string): string | string[] | undefined {

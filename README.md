@@ -154,6 +154,14 @@ const res = client.hello("world");
 client.$abort(res);
 ```
 
+## Error handling
+
+In case of an error, the client will throw an `RpcError` instance that has a `message`, `code` and optionally a `data` property.
+
+When the service throws an error, these properties will be serialized to the client.
+
+For internal errors (invalid request, method not found) the error code is set according to [the specs](https://www.jsonrpc.org/specification#error_object).
+
 ## CORS credentials
 
 To include credentials in cross-origin requests, pass `credentials: 'include'` as option.
