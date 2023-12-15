@@ -1,4 +1,4 @@
-import { Service } from "./service";
+import { Service } from "./service.js";
 
 /**
  * A `Service` implementation with access to the request headers.

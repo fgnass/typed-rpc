@@ -1,5 +1,5 @@
 import type { Request, RequestHandler } from "express";
-import { RpcService, handleRpc } from "./server";
+import { RpcService, handleRpc } from "./server.js";
 
 export type RpcServiceFactory<T> = (req: Request) => RpcService<T>;
 
