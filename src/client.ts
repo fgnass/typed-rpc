@@ -1,4 +1,4 @@
-import { JsonRpcRequest, JsonRpcResponse } from "./types.js";
+import type { JsonRpcRequest, JsonRpcResponse } from "./types.d.ts";
 
 /**
  * Error class that is thrown if a remote method returns an error.

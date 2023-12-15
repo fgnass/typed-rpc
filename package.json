@@ -14,7 +14,7 @@
     "express"
   ],
   "scripts": {
-    "build": "rm -rf lib && tsc",
+    "build": "rm -rf lib && tsc && cp src/*.d.ts lib",
     "start": "node lib/test/server",
     "pretest": "npm run build",
     "test": "with-server tap lib/test/client.js",

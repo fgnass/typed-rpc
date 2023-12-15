@@ -2,7 +2,7 @@ import type {
   JsonRpcRequest,
   JsonRpcErrorResponse,
   JsonRpcSuccessResponse,
-} from "./types.js";
+} from "./types.d.ts";
 
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
