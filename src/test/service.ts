@@ -15,7 +15,7 @@ export const service = {
     throw err;
   },
 
-  echoHeader(name: string): string | string[] | undefined {
+  echoHeader(name: string): string | string[] | null {
     throw new Error("This service can't access request headers");
   },
 };

@@ -73,8 +73,6 @@ export type RpcResult =
   | number
   | boolean
   | null
-  | undefined
-  | void
   | RpcResult[]
   | { [key: string]: RpcResult };
 

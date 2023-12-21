@@ -25,6 +25,6 @@ export class RequestAwareService implements Service {
   }
 
   echoHeader(name: string) {
-    return this.headers?.[name.toLowerCase()];
+    return this.headers?.[name.toLowerCase()] ?? null;
   }
 }
