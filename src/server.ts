@@ -112,7 +112,6 @@ export async function handleRpc<T extends RpcService<T>>(
   }
   const { jsonrpc, method, params } = request;
   if (!hasMethod(service, method)) {
-    console.log("Method %s not found", method, service);
     return {
       jsonrpc,
       id,
