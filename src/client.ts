@@ -9,6 +9,7 @@ export class RpcError extends Error {
 
   constructor(message: string, code: number, data?: unknown) {
     super(message);
+    this.name = "RpcError";
     this.code = code;
     this.data = data;
     // https://www.typescriptlang.org/docs/handbook/2/classes.html#inheriting-built-in-types
