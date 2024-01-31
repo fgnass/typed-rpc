@@ -45,8 +45,8 @@ export const myService = {
 export type MyService = typeof myService;
 ```
 
-> **Note**
-> Of course, the functions in your service can also be `async`.
+> [!TIP]
+> The functions in your service can also be `async`.
 
 Create a server with a route to handle the API requests:
 
@@ -63,7 +63,7 @@ app.post("/api", rpcHandler(myService));
 app.listen(3000);
 ```
 
-> **Note**
+> [!NOTE]
 > You can also use typed-rpc in servers other than Express.
 > Check out the docs below for [examples](#support-for-other-runtimes).
 
@@ -140,7 +140,7 @@ const client = rpcClient<MyService>({
 });
 ```
 
-> **Note**
+> [!TIP]
 > The `getHeaders` function can also be `async`.
 
 ## Aborting requests
@@ -208,7 +208,7 @@ fastify.post("/api", async (req, reply) => {
 
 🦕 You can also use `typed-rpc` in Deno like in this [example](https://github.com/fgnass/typed-rpc-deno-example).
 
-> **Note**
+> [!NOTE]
 > This package is also published under https://deno.land/x/typed_rpc
 
 ### Next.js
@@ -240,7 +240,7 @@ export default {
 
 ## Runtime type checking
 
-> **Warning**
+> [!WARNING]
 > Keep in mind that `typed-rpc` does not perform any runtime type checks.
 
 This is usually not an issue, as long as your service can handle this
