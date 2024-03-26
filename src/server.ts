@@ -50,7 +50,11 @@ function getErrorMessage(err: unknown) {
 
 function getErrorData(err: unknown) {
   if (hasProperty(err, "data")) {
-    return (err.data = JSON.parse(JSON.stringify(err.data)));
+      const stringifiedData = JSON.stringify(err.data);
+      if (stringifiedData !== undefined) {
+          err.data = JSON.parse(stringifiedData);
+      }
+      return err.data;
   }
 }
 
