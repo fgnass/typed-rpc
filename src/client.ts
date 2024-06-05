@@ -93,13 +93,11 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
   return new Proxy(target, {
     /* istanbul ignore next */
     get(target, prop, receiver) {
-      if (typeof prop === "symbol") return;
-      if (prop in Object.prototype) return;
-      if (prop === "toJSON") return;
       if (Reflect.has(target, prop)) {
         return Reflect.get(target, prop, receiver);
       }
-      if (prop.startsWith("$")) return;
+      if (typeof prop === "symbol") return;
+      if (prop === "toJSON") return;
       return (...args: any) => {
         const ac = new AbortController();
         const promise = sendRequest(prop.toString(), args, ac.signal);

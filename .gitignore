@@ -1,5 +1,5 @@
 /lib
 /node_modules
-.nyc_output
+/.tap
 package-lock.json
 yarn.lock

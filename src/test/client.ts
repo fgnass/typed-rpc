@@ -75,7 +75,7 @@ tap.test("should use custom error message if configured", async (t) => {
   );
   const promise = client.sorry("Dave");
   t.rejects(promise, new RpcError("Something went wrong", 100));
-})
+});
 
 tap.test("should fail on invalid response", async (t) => {
   const client = rpcClient<Service>({
@@ -94,4 +94,12 @@ tap.test("should abort", async (t) => {
   const res = client.hello("world");
   client.$abort(res);
   t.rejects(res, { name: "AbortError" });
+});
+
+tap.test("should not relay internal methods", async (t) => {
+  const client = rpcClient<Service>(url);
+  JSON.stringify(client);
+  client.toString();
+  //@ts-expect-error
+  client[Symbol()];
 });
