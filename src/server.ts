@@ -50,11 +50,11 @@ function getErrorMessage(err: unknown) {
 
 function getErrorData(err: unknown) {
   if (hasProperty(err, "data")) {
-      const stringifiedData = JSON.stringify(err.data);
-      if (stringifiedData !== undefined) {
-          err.data = JSON.parse(stringifiedData);
-      }
-      return err.data;
+    const stringifiedData = JSON.stringify(err.data);
+    if (stringifiedData !== undefined) {
+      err.data = JSON.parse(stringifiedData);
+    }
+    return err.data;
   }
 }
 
@@ -101,9 +101,19 @@ type RpcServiceProp<T> = T extends (...args: any) => any ? ValidMethod<T> : T;
  */
 export type RpcService<T> = { [K in keyof T]: RpcServiceProp<T[K]> };
 
+/**
+ * Options to customize the behavior of the RPC handler.
+ */
+export type RpcHandlerOptions = {
+  getErrorCode?: (err: unknown) => number;
+  getErrorMessage?: (err: unknown) => string;
+  getErrorData?: (err: unknown) => unknown;
+};
+
 export async function handleRpc<T extends RpcService<T>>(
   request: unknown,
-  service: T
+  service: T,
+  options?: RpcHandlerOptions
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
   const id = getRequestId(request);
   if (!isJsonRpcRequest(request)) {
@@ -130,9 +140,9 @@ export async function handleRpc<T extends RpcService<T>>(
       jsonrpc,
       id,
       error: {
-        code: getErrorCode(err),
-        message: getErrorMessage(err),
-        data: getErrorData(err),
+        code: (options?.getErrorCode ?? getErrorCode)(err),
+        message: (options?.getErrorMessage ?? getErrorMessage)(err),
+        data: (options?.getErrorData ?? getErrorData)(err),
       },
     };
   }
