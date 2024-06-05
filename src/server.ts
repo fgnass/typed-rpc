@@ -105,6 +105,7 @@ export type RpcService<T> = { [K in keyof T]: RpcServiceProp<T[K]> };
  * Options to customize the behavior of the RPC handler.
  */
 export type RpcHandlerOptions = {
+  onError?: (err: unknown) => void;
   getErrorCode?: (err: unknown) => number;
   getErrorMessage?: (err: unknown) => string;
   getErrorData?: (err: unknown) => unknown;
@@ -136,6 +137,9 @@ export async function handleRpc<T extends RpcService<T>>(
     const result = await service[method as keyof T](...params);
     return { jsonrpc, id, result };
   } catch (err) {
+    if (options?.onError) {
+      options.onError(err);
+    }
     return {
       jsonrpc,
       id,

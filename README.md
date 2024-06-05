@@ -158,7 +158,7 @@ client.$abort(res);
 
 In case of an error, the client will throw an `RpcError` instance that has a `message`, `code` and optionally a `data` property.
 
-When the service throws an error, these properties will be serialized to the client.
+When the service throws an error, these properties will be serialized to the client. You can customize the code, message and data via the `RpcHandlerOptions`. You can also provide an `onError` handler to log errors on the server.
 
 For internal errors (invalid request, method not found) the error code is set according to [the specs](https://www.jsonrpc.org/specification#error_object).
 
