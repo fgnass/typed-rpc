@@ -7,17 +7,36 @@
     "json-rpc",
     "typescript"
   ],
-  "main": "./lib/client.js",
+  "type": "module",
   "files": [
-    "lib",
-    "server",
-    "express"
+    "dist"
   ],
+  "exports": {
+    ".": {
+      "import": {
+        "types": "./dist/client.d.mts",
+        "default": "./dist/client.mjs"
+      },
+      "require": {
+        "types": "./dist/client.d.cts",
+        "default": "./dist/client.cjs"
+      }
+    },
+    "./server": {
+      "import": {
+        "types": "./dist/server.d.mts",
+        "default": "./dist/server.mjs"
+      },
+      "require": {
+        "types": "./dist/server.d.cts",
+        "default": "./dist/server.cjs"
+      }
+    }
+  },
   "scripts": {
-    "build": "rm -rf lib && tsc && cp src/*.d.ts lib",
-    "start": "node lib/test/server",
-    "pretest": "npm run build",
-    "test": "with-server tap lib/test/client.js",
+    "build": "pkgroll --clean-dist --sourcemap",
+    "start": "tsx src/test/server.ts",
+    "test": "with-server tap src/test/client.ts",
     "prepare": "npm run build"
   },
   "author": "Felix Gnass <fgnass@gmail.com>",
@@ -29,7 +48,10 @@
     "@types/tap": "^15.0.11",
     "express": "^4.19.2",
     "isomorphic-fetch": "^3.0.0",
+    "pkgroll": "^2.4.2",
+    "superjson": "^2.2.1",
     "tap": "^19.0.2",
+    "tsx": "^4.16.5",
     "typescript": "^5.4.5",
     "with-server": "^2.1.0"
   }

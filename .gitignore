@@ -1,4 +1,5 @@
-/lib
+.DS_Store
+/dist
 /node_modules
 /.tap
 package-lock.json

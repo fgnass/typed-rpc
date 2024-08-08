@@ -23,3 +23,8 @@ export interface JsonRpcSuccessResponse extends BaseJsonRpcResponse {
 }
 
 export type JsonRpcResponse = JsonRpcSuccessResponse | JsonRpcErrorResponse;
+
+export type RpcTranscoder<T> = {
+  serialize: (data: T) => any;
+  deserialize: (data: any) => T;
+};

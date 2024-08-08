@@ -1,7 +1,9 @@
 import "isomorphic-fetch";
+import { serialize, deserialize } from "superjson";
 import tap from "tap";
 import { rpcClient, RpcError } from "../client.js";
-import { Service } from "./service.js";
+import type { Service } from "./service.js";
+import type { ComplexService } from "./complexService.js";
 
 const url = process.env.SERVER_URL + "/api";
 
@@ -58,6 +60,7 @@ tap.test("should pass error payload to client", async (t) => {
 
 tap.test("should support custom transports", async (t) => {
   const client = rpcClient<Service>({
+    url: "n/a",
     transport: async (req) => {
       return {
         jsonrpc: "2.0",
@@ -77,8 +80,18 @@ tap.test("should use custom error message if configured", async (t) => {
   t.rejects(promise, new RpcError("Something went wrong", 100));
 });
 
+tap.test("should support custom transcoders", async (t) => {
+  const client = rpcClient<ComplexService>({
+    url: process.env.SERVER_URL + "/complex-api",
+    transcoder: { serialize, deserialize },
+  });
+  const date = await client.startOfEpoch();
+  t.type(date, Date);
+});
+
 tap.test("should fail on invalid response", async (t) => {
   const client = rpcClient<Service>({
+    url: "n/a",
     transport: async (req) => {
       return {
         invalid: "",

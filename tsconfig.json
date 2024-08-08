@@ -1,14 +1,13 @@
 {
-  "compilerOptions": {
-    "declaration": true,
-    "esModuleInterop": true,
-    "module": "CommonJS",
-    "moduleResolution": "node",
-    "outDir": "lib",
-    "sourceMap": true,
-    "strict": true,
-    "skipLibCheck": true,
-    "target": "ES2020"
-  },
-  "include": ["src"]
+	"compilerOptions": {
+		"target": "es2022",
+		"moduleDetection": "force",
+		"module": "preserve",
+		"strict": true,
+		"noImplicitOverride": true,
+		"noEmit": true,
+		"esModuleInterop": true,
+		"skipLibCheck": true,
+		"verbatimModuleSyntax": true,
+	}
 }

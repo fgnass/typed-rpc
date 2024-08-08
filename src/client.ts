@@ -1,4 +1,10 @@
-import type { JsonRpcRequest, JsonRpcResponse } from "./types.d.ts";
+import type {
+  JsonRpcRequest,
+  JsonRpcResponse,
+  RpcTranscoder,
+} from "./types.js";
+
+export * from "./types";
 
 /**
  * Error class that is thrown if a remote method returns an error.
@@ -28,10 +34,10 @@ export type RpcTransport = (
 
 type RpcClientOptions =
   | string
-  | FetchOptions
-  | {
-      transport: RpcTransport;
-    };
+  | (FetchOptions & {
+      transport?: RpcTransport;
+      transcoder?: RpcTranscoder<any>;
+    });
 
 type FetchOptions = {
   url: string;
@@ -52,12 +58,17 @@ type PromisifyMethods<T extends object> = {
   [K in keyof T]: Promisify<T[K]>;
 };
 
+const identityTranscoder: RpcTranscoder<any> = {
+  serialize: (data) => data,
+  deserialize: (data) => data,
+};
+
 export function rpcClient<T extends object>(options: RpcClientOptions) {
   if (typeof options === "string") {
     options = { url: options };
   }
-  const transport =
-    "transport" in options ? options.transport : fetchTransport(options);
+  const transport = options.transport || fetchTransport(options);
+  const { serialize, deserialize } = options.transcoder || identityTranscoder;
 
   /**
    * Send a request using the configured transport and handle the result.
@@ -67,7 +78,9 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     args: any[],
     signal: AbortSignal
   ) => {
-    const res = await transport(createRequest(method, args), signal);
+    const req = createRequest(method, args);
+    const raw = await transport(serialize(req as any), signal);
+    const res = deserialize(raw);
     if ("result" in res) {
       return res.result;
     } else if ("error" in res) {

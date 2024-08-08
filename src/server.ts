@@ -2,7 +2,10 @@ import type {
   JsonRpcRequest,
   JsonRpcErrorResponse,
   JsonRpcSuccessResponse,
-} from "./types.d.ts";
+  RpcTranscoder,
+} from "./types.js";
+
+export * from "./types";
 
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
@@ -69,85 +72,87 @@ function getRequestId(req: unknown) {
   return null;
 }
 
-/**
- * Valid RPC return types that can be serialized.
- */
-export type RpcResult =
+export type JsonValue =
   | string
   | number
   | boolean
   | null
-  | RpcResult[]
-  | { [key: string]: RpcResult };
+  | JsonValue[]
+  | { [key: string]: JsonValue };
 
 /**
  * Signature that all RPC methods must adhere to.
  */
-export type RpcMethod = (...args: any[]) => RpcResult | Promise<RpcResult>;
+export type RpcMethod<V = JsonValue> = (...args: any[]) => V | Promise<V>;
 
 /**
  * Conditional type to verify a given type is a valid RPC method.
  */
-type ValidMethod<T> = T extends RpcMethod ? T : never;
+type ValidMethod<T, V> = T extends RpcMethod<V> ? T : never;
 
 /**
  * Conditional type to verify that a function is also a valid RPC method.
  */
-type RpcServiceProp<T> = T extends (...args: any) => any ? ValidMethod<T> : T;
+type RpcServiceProp<T, V> = T extends (...args: any) => any
+  ? ValidMethod<T, V>
+  : T;
 
 /**
  * Type for RPC services that makes sure that all return values can
  * be serialized.
  */
-export type RpcService<T> = { [K in keyof T]: RpcServiceProp<T[K]> };
+export type RpcService<T, V> = { [K in keyof T]: RpcServiceProp<T[K], V> };
 
 /**
  * Options to customize the behavior of the RPC handler.
  */
-export type RpcHandlerOptions = {
+export type RpcHandlerOptions<V> = {
+  transcoder?: RpcTranscoder<V>;
   onError?: (err: unknown) => void;
   getErrorCode?: (err: unknown) => number;
   getErrorMessage?: (err: unknown) => string;
   getErrorData?: (err: unknown) => unknown;
 };
 
-export async function handleRpc<T extends RpcService<T>>(
+export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
   request: unknown,
   service: T,
-  options?: RpcHandlerOptions
+  options?: RpcHandlerOptions<V>
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
-  const id = getRequestId(request);
-  if (!isJsonRpcRequest(request)) {
-    //The JSON sent is not a valid Request object
-    return {
+  const req = options?.transcoder?.deserialize(request) ?? request;
+  const id = getRequestId(req);
+  const res = (data: any) => {
+    const raw = {
       jsonrpc: "2.0",
       id,
-      error: { code: -32600, message: "Invalid Request" },
+      ...data,
     };
+    return options?.transcoder?.serialize(raw) ?? raw;
+  };
+
+  if (!isJsonRpcRequest(req)) {
+    //The JSON sent is not a valid Request object
+    return res({ error: { code: -32600, message: "Invalid Request" } });
   }
-  const { jsonrpc, method, params } = request;
+  const { method, params } = req;
   if (!hasMethod(service, method)) {
-    return {
-      jsonrpc,
-      id,
+    return res({
       error: { code: -32601, message: `Method not found: ${method}` },
-    };
+    });
   }
   try {
     const result = await service[method as keyof T](...params);
-    return { jsonrpc, id, result };
+    return res({ result });
   } catch (err) {
     if (options?.onError) {
       options.onError(err);
     }
-    return {
-      jsonrpc,
-      id,
+    return res({
       error: {
         code: (options?.getErrorCode ?? getErrorCode)(err),
         message: (options?.getErrorMessage ?? getErrorMessage)(err),
         data: (options?.getErrorData ?? getErrorData)(err),
       },
-    };
+    });
   }
 }

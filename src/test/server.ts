@@ -1,7 +1,10 @@
 import express from "express";
-import { rpcHandler } from "../express.js";
+import { serialize, deserialize } from "superjson";
+
+import { handleRpc } from "../server.js";
 import { service } from "./service.js";
 import { RequestAwareService } from "./RequestAwareService.js";
+import { complexService } from "./complexService.js";
 
 const app = express();
 
@@ -13,20 +16,36 @@ app.use("/api", (req, res, next) => {
   else next();
 });
 
-app.post("/api", rpcHandler(service));
+app.post("/api", (req, res, next) => {
+  handleRpc(req.body, service)
+    .then((result) => res.json(result))
+    .catch(next);
+});
 
-app.post(
-  "/request-aware-api",
-  rpcHandler((req) => new RequestAwareService(req.headers))
-);
+app.post("/request-aware-api", (req, res, next) => {
+  handleRpc(req.body, new RequestAwareService(req.headers))
+    .then((result) => res.json(result))
+    .catch(next);
+});
 
-app.post(
-  "/error-masked-api",
-  rpcHandler(service, {
+app.post("/error-masked-api", (req, res, next) => {
+  handleRpc(req.body, service, {
     getErrorMessage: (error: unknown) => "Something went wrong",
     getErrorCode: (error: unknown) => 100,
   })
-);
+    .then((result) => res.json(result))
+    .catch(next);
+});
+
+app.post("/complex-api", (req, res, next) => {
+  handleRpc(req.body, complexService, {
+    transcoder: { serialize, deserialize },
+    getErrorMessage: (error: unknown) => "Something went wrong",
+    getErrorCode: (error: unknown) => 100,
+  })
+    .then((result) => res.json(result))
+    .catch(next);
+});
 
 const port = process.env.PORT || 3000;
 app.listen(port, () => {
