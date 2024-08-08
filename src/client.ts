@@ -4,7 +4,7 @@ import type {
   RpcTranscoder,
 } from "./types.js";
 
-export * from "./types";
+export * from "./types.js";
 
 /**
  * Error class that is thrown if a remote method returns an error.

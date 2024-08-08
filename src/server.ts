@@ -5,7 +5,7 @@ import type {
   RpcTranscoder,
 } from "./types.js";
 
-export * from "./types";
+export * from "./types.js";
 
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
