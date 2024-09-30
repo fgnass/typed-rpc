@@ -81,23 +81,19 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     const req = createRequest(method, args);
     const raw = await transport(serialize(req as any), signal);
     const res = deserialize(raw);
-    debug("res", res);
     if (res?.jsonrpc !== "2.0") {
       throw new TypeError("Not a JSON-RPC 2.0 response");
     }
 
     if ("error" in res) {
       const { code, message, data } = res.error;
-      debug("error", new RpcError(message, code, data));
       throw new RpcError(message, code, data);
     }
 
     if ("result" in res) {
-      debug("result", res);
       return res.result;
     }
 
-    debug("invalid response", res);
     throw new TypeError("Invalid response");
   };
 
@@ -210,12 +206,10 @@ export type WebSocketTransportOptions = {
   onOpen?: (ev: Event, ws: WebSocket) => void;
 };
 
-const debug = process.env.DEBUG ? console.log : () => {};
-
 export function websocketTransport(options: WebSocketTransportOptions): RpcTransport {
   type Request = { resolve: Function, reject: Function, timeoutId?: ReturnType<typeof setTimeout> };
   const requests = new Map<string | number, Request>();
-  const timeout = options.timeout || 60_000;
+  const timeout = options.timeout ?? 60_000;
 
   let ws: WebSocket;
   function connect() {
@@ -230,14 +224,12 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
       const res = JSON.parse(raw) as JsonRpcResponse;
 
       if (typeof res.id !== "string" && typeof res.id !== "number") {
-        debug('Request not found for id: ' + res.id);
         options.onMessageError?.(new TypeError("Invalid response (missing id)"));
         return;
       }
 
       const request = requests.get(res.id);
       if (!request) {
-        debug('Request not found for id: ' + res.id);
         options.onMessageError?.(new Error("Request not found for id: " + res.id));
         return;
       }
@@ -246,8 +238,6 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
       if (request.timeoutId) {
         clearTimeout(request.timeoutId);
       }
-
-      debug('res', res, request);
 
       request.resolve(raw);
     });
@@ -267,13 +257,15 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
   connect();
 
   return async (req, signal): Promise<any> => {
-    debug('req', req);
+    const _req: JsonRpcRequest = typeof req === 'string' ? JSON.parse(req) : req;
 
-    if (req.id === undefined || req.id === null) { // skip notifications
+    if (typeof _req.id !== 'string' && typeof _req.id !== 'number') { // skip notifications
       return;
     }
 
-    if (requests.has(req.id)) {
+    const requestId = _req.id;
+
+    if (requests.has(requestId)) {
       throw new RpcError("Request already exists", -32000);
     }
 
@@ -282,7 +274,6 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
 
       if (timeout > 0) {
         request.timeoutId = setTimeout(() => {
-          debug('timeout');
           reject(new RpcError("Request timed out", -32000));
         }, timeout);
       }
@@ -291,17 +282,14 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
         if (request.timeoutId) {
           clearTimeout(request.timeoutId);
         }
-        debug('signal');
         reject(new RpcError("Request aborted", -32000));
       };
 
-      requests.set(req.id, request);
+      requests.set(requestId, request);
 
-      debug('send', req);
       ws.send(req);
     });
 
-    debug('res c', res);
     return res;
   };
 }

@@ -60,18 +60,14 @@ wss.on('connection', (ws) => {
   ws.on('error', console.error);
 
   ws.on('message', (data) => {
-    handleRpc(data.toString(), complexService, {
+    handleRpc(data.toString(), service, {
       transcoder: {
         serialize: JSON.stringify,
         deserialize: JSON.parse,
       },
       getErrorMessage: (error: unknown) => "Something went wrong",
       getErrorCode: (error: unknown) => 100,
-    })
-      .then((result) => {
-        console.log("res", result)
-        ws.send(result)
-    })
+    }).then((result) => ws.send(result))
   });
 });
 
