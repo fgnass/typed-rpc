@@ -13,7 +13,7 @@ export * from "./types.js";
 export function isJsonRpcRequest(req: any): req is JsonRpcRequest {
   if (req.jsonrpc !== "2.0") return false;
   if (typeof req.method !== "string") return false;
-  if (!Array.isArray(req.params)) return false;
+  if (!Array.isArray(req.params) && req.params !== undefined) return false;
   return true;
 }
 
@@ -141,7 +141,7 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
     });
   }
   try {
-    const result = await service[method as keyof T](...params);
+    const result = await service[method as keyof T](...params ?? []);
     return res({ result });
   } catch (err) {
     if (options?.onError) {
