@@ -120,10 +120,6 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
   options?: RpcHandlerOptions<V>
 ): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
   const req = options?.transcoder?.deserialize(request) ?? request;
-  console.log("req", {
-    req,
-    request
-  });
   const id = getRequestId(req);
   const res = (data: any) => {
     const raw = {
