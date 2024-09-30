@@ -40,7 +40,7 @@ app.post("/error-masked-api", (req, res, next) => {
 });
 
 app.post("/complex-api", (req, res, next) => {
-  handleRpc(req.body, service, {
+  handleRpc(req.body, complexService, {
     transcoder: { serialize, deserialize },
     getErrorMessage: (error: unknown) => "Something went wrong",
     getErrorCode: (error: unknown) => 100,
