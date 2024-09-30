@@ -81,12 +81,23 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     const req = createRequest(method, args);
     const raw = await transport(serialize(req as any), signal);
     const res = deserialize(raw);
-    if ("result" in res) {
-      return res.result;
-    } else if ("error" in res) {
+    debug("res", res);
+    if (res?.jsonrpc !== "2.0") {
+      throw new TypeError("Not a JSON-RPC 2.0 response");
+    }
+
+    if ("error" in res) {
       const { code, message, data } = res.error;
+      debug("error", new RpcError(message, code, data));
       throw new RpcError(message, code, data);
     }
+
+    if ("result" in res) {
+      debug("result", res);
+      return res.result;
+    }
+
+    debug("invalid response", res);
     throw new TypeError("Invalid response");
   };
 
@@ -170,5 +181,127 @@ export function fetchTransport(options: FetchOptions): RpcTransport {
       throw new RpcError(res.statusText, res.status);
     }
     return await res.json();
+  };
+}
+
+export type WebSocketTransportOptions = {
+  /**
+   * The URL to connect to.
+   */
+  url: string;
+  /**
+   * Reconnection timeout in milliseconds. Default is 1000ms.
+   * Set to 0 to disable reconnection.
+   */
+  reconnectTimeout?: number;
+  /**
+   * The timeout in milliseconds for requests.
+   * Default is 60_000ms.
+   */
+  timeout?: number;
+  /**
+   * Error handler for incoming messages.
+   */
+  onMessageError?: (err: unknown) => void;
+  /**
+   * WebSocket open handler.
+   * Use to access the WebSocket instance.
+   */
+  onOpen?: (ev: Event, ws: WebSocket) => void;
+};
+
+const debug = process.env.DEBUG ? console.log : () => {};
+
+export function websocketTransport(options: WebSocketTransportOptions): RpcTransport {
+  type Request = { resolve: Function, reject: Function, timeoutId?: ReturnType<typeof setTimeout> };
+  const requests = new Map<string | number, Request>();
+  const timeout = options.timeout || 60_000;
+
+  let ws: WebSocket;
+  function connect() {
+    ws = new WebSocket(options.url.replace("http", "ws"));
+
+    ws.addEventListener('open', (e) => {
+      options.onOpen?.(e, ws);
+    });
+
+    ws.addEventListener('message', (e) => {
+      const raw = e.data.toString();
+      const res = JSON.parse(raw) as JsonRpcResponse;
+
+      if (typeof res.id !== "string" && typeof res.id !== "number") {
+        debug('Request not found for id: ' + res.id);
+        options.onMessageError?.(new TypeError("Invalid response (missing id)"));
+        return;
+      }
+
+      const request = requests.get(res.id);
+      if (!request) {
+        debug('Request not found for id: ' + res.id);
+        options.onMessageError?.(new Error("Request not found for id: " + res.id));
+        return;
+      }
+
+      requests.delete(res.id);
+      if (request.timeoutId) {
+        clearTimeout(request.timeoutId);
+      }
+
+      debug('res', res, request);
+
+      request.resolve(raw);
+    });
+
+    ws.addEventListener('close', (e) => {
+      const reconnectTimeout = options.reconnectTimeout ?? 1000;
+      if (reconnectTimeout !== 0 && !e.wasClean) {
+        setTimeout(connect, reconnectTimeout);
+      }
+    });
+
+    ws.addEventListener('error', () => {
+      ws.close();
+    });
+  }
+
+  connect();
+
+  return async (req, signal): Promise<any> => {
+    debug('req', req);
+
+    if (req.id === undefined || req.id === null) { // skip notifications
+      return;
+    }
+
+    if (requests.has(req.id)) {
+      throw new RpcError("Request already exists", -32000);
+    }
+
+    const res = await new Promise((resolve, reject) => {
+      const request: Request = { resolve, reject };
+
+      if (timeout > 0) {
+        request.timeoutId = setTimeout(() => {
+          debug('timeout');
+          reject(new RpcError("Request timed out", -32000));
+        }, timeout);
+      }
+
+      signal.onabort = () => {
+        if (request.timeoutId) {
+          clearTimeout(request.timeoutId);
+        }
+        debug('signal');
+        reject(new RpcError("Request aborted", -32000));
+      };
+
+      requests.set(req.id, request);
+
+      debug('send', req);
+      ws.send(req);
+    });
+
+    debug('res c', res);
+    return res;
   };
 }
