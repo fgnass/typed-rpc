@@ -123,29 +123,27 @@ tap.test("should use websocket", async (t) => {
   type Client = ReturnType<typeof rpcClient<Service>>;
   let client: Client | undefined;
   let ws: WebSocket | undefined;
-  await new Promise<void>((resolve, reject) => {
-    client = rpcClient<Service>({
-      url: 'n/a',
-      transport: websocketTransport({
-        url: process.env.SERVER_URL + "/ws",
-        timeout: 1000, // low timeout for testing
-        reconnectTimeout: 0, // disable reconnect
-        onOpen(e, _ws) {
-          ws = _ws;
-          resolve();
-        },
-        onMessageError(err) {
-          reject(err);
-        }
-      }),
-      transcoder: {
-        serialize: JSON.stringify,
-        deserialize: JSON.parse,
-      }
+  try {
+    await new Promise<void>((resolve, reject) => {
+      client = rpcClient<Service>({
+        url: "n/a",
+        transport: websocketTransport({
+          url: process.env.SERVER_URL + "/ws",
+          timeout: 1000, // low timeout for testing
+          reconnectTimeout: 0, // disable reconnect
+          onOpen(e, _ws) {
+            ws = _ws;
+            resolve();
+          },
+          onMessageError(err) {
+            reject(err);
+          },
+        }),
+      });
     });
-  });
-  const result = await client!.hello("world");
-  t.equal(result, "Hello world!");
-  ws?.close();
-  ws = undefined;
+    const result = await client!.hello("world");
+    t.equal(result, "Hello world!");
+  } finally {
+    ws?.close();
+  }
 });
