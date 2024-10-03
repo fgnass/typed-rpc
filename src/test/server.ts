@@ -1,7 +1,5 @@
 import express from "express";
 import { serialize, deserialize } from "superjson";
-import { WebSocketServer } from "ws";
-import { createServer } from "node:http";
 
 import { handleRpc } from "../server.js";
 import { service } from "./service.js";
@@ -49,29 +47,7 @@ app.post("/complex-api", (req, res, next) => {
     .catch(next);
 });
 
-const server = createServer(app);
-
-const wss = new WebSocketServer({
-  path: "/ws",
-  server,
-});
-
-wss.on('connection', (ws) => {
-  ws.on('error', console.error);
-
-  ws.on('message', (data) => {
-    handleRpc(data.toString(), service, {
-      transcoder: {
-        serialize: JSON.stringify,
-        deserialize: JSON.parse,
-      },
-      getErrorMessage: (error: unknown) => "Something went wrong",
-      getErrorCode: (error: unknown) => 100,
-    }).then((result) => ws.send(result))
-  });
-});
-
 const port = process.env.PORT || 3000;
-server.listen(port, () => {
+app.listen(port, () => {
   console.log("Server listening on http://localhost:%s", port);
 });
