@@ -1,11 +1,13 @@
 import "isomorphic-fetch";
+import WebSocket from "isomorphic-ws";
 import { serialize, deserialize } from "superjson";
 import tap from "tap";
-import { rpcClient, RpcError } from "../client.js";
+import { rpcClient, RpcError, websocketTransport } from "../client.js";
 import type { Service } from "./service.js";
 import type { ComplexService } from "./complexService.js";
 
 const url = process.env.SERVER_URL + "/api";
+globalThis.WebSocket = WebSocket;
 
 tap.test("should talk to the server", async (t) => {
   const client = rpcClient<Service>(url);
@@ -115,4 +117,35 @@ tap.test("should not relay internal methods", async (t) => {
   client.toString();
   //@ts-expect-error
   client[Symbol()];
+});
+
+tap.test("should use websocket", async (t) => {
+  type Client = ReturnType<typeof rpcClient<Service>>;
+  let client: Client | undefined;
+  let ws: WebSocket | undefined;
+  await new Promise<void>((resolve, reject) => {
+    client = rpcClient<Service>({
+      url: 'n/a',
+      transport: websocketTransport({
+        url: process.env.SERVER_URL + "/ws",
+        timeout: 1000, // low timeout for testing
+        reconnectTimeout: 0, // disable reconnect
+        onOpen(e, _ws) {
+          ws = _ws;
+          resolve();
+        },
+        onMessageError(err) {
+          reject(err);
+        }
+      }),
+      transcoder: {
+        serialize: JSON.stringify,
+        deserialize: JSON.parse,
+      }
+    });
+  });
+  const result = await client!.hello("world");
+  t.equal(result, "Hello world!");
+  ws?.close();
+  ws = undefined;
 });
