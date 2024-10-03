@@ -293,7 +293,7 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
 
       requests.set(requestId, request);
 
-      ws.send(req);
+      ws.send(JSON.stringify(req));
     });
 
     return res;
