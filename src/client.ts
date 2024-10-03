@@ -130,13 +130,18 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
 /**
  * Create a JsonRpcRequest for the given method.
  */
-export function createRequest(method: string, params: any[]): JsonRpcRequest {
-  return {
+export function createRequest(method: string, params?: any[]): JsonRpcRequest {
+  const req: JsonRpcRequest = {
     jsonrpc: "2.0",
     id: Date.now(),
     method,
-    params: removeTrailingUndefs(params),
   };
+
+  if (params?.length) {
+    req.params = removeTrailingUndefs(params);
+  }
+
+  return req;
 }
 
 /**
