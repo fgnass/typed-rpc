@@ -227,9 +227,10 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
     ws.addEventListener('message', (e) => {
       const raw = e.data.toString();
       const res = JSON.parse(raw) as JsonRpcResponse;
-
-      if (typeof res.id !== "string" && typeof res.id !== "number") {
-        options.onMessageError?.(new TypeError("Invalid response (missing id)"));
+      if (typeof res.id !== "string" || typeof res.id !== "number") {
+        options.onMessageError?.(
+          new TypeError("Invalid response (missing id)")
+        );
         return;
       }
 
