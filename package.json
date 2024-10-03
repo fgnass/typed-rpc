@@ -34,8 +34,9 @@
     }
   },
   "scripts": {
+    "dev": "tsx --watch src/test/server.ts",
     "build": "pkgroll --clean-dist --sourcemap",
-    "start": "tsx --watch src/test/server.ts",
+    "start": "tsx src/test/server.ts",
     "test": "with-server tap src/test/client.ts",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit"
