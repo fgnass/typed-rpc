@@ -56,10 +56,10 @@ const wss = new WebSocketServer({
   server,
 });
 
-wss.on('connection', (ws) => {
-  ws.on('error', console.error);
+wss.on("connection", (ws) => {
+  ws.on("error", console.error);
 
-  ws.on('message', (data) => {
+  ws.on("message", (data) => {
     handleRpc(data.toString(), service, {
       transcoder: {
         serialize: JSON.stringify,

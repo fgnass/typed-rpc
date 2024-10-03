@@ -211,8 +211,14 @@ export type WebSocketTransportOptions = {
   onOpen?: (ev: Event, ws: WebSocket) => void;
 };
 
-export function websocketTransport(options: WebSocketTransportOptions): RpcTransport {
-  type Request = { resolve: Function, reject: Function, timeoutId?: ReturnType<typeof setTimeout> };
+export function websocketTransport(
+  options: WebSocketTransportOptions
+): RpcTransport {
+  type Request = {
+    resolve: Function;
+    reject: Function;
+    timeoutId?: ReturnType<typeof setTimeout>;
+  };
   const requests = new Map<string | number, Request>();
   const timeout = options.timeout ?? 60_000;
 
@@ -220,11 +226,11 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
   function connect() {
     ws = new WebSocket(options.url.replace("http", "ws"));
 
-    ws.addEventListener('open', (e) => {
+    ws.addEventListener("open", (e) => {
       options.onOpen?.(e, ws);
     });
 
-    ws.addEventListener('message', (e) => {
+    ws.addEventListener("message", (e) => {
       const raw = e.data.toString();
       const res = JSON.parse(raw) as JsonRpcResponse;
       if (typeof res.id !== "string" || typeof res.id !== "number") {
@@ -236,7 +242,9 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
 
       const request = requests.get(res.id);
       if (!request) {
-        options.onMessageError?.(new Error("Request not found for id: " + res.id));
+        options.onMessageError?.(
+          new Error("Request not found for id: " + res.id)
+        );
         return;
       }
 
@@ -248,14 +256,14 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
       request.resolve(raw);
     });
 
-    ws.addEventListener('close', (e) => {
+    ws.addEventListener("close", (e) => {
       const reconnectTimeout = options.reconnectTimeout ?? 1000;
       if (reconnectTimeout !== 0 && !e.wasClean) {
         setTimeout(connect, reconnectTimeout);
       }
     });
 
-    ws.addEventListener('error', () => {
+    ws.addEventListener("error", () => {
       ws.close();
     });
   }
@@ -263,9 +271,11 @@ export function websocketTransport(options: WebSocketTransportOptions): RpcTrans
   connect();
 
   return async (req, signal): Promise<any> => {
-    const _req: JsonRpcRequest = typeof req === 'string' ? JSON.parse(req) : req;
+    const _req: JsonRpcRequest =
+      typeof req === "string" ? JSON.parse(req) : req;
 
-    if (typeof _req.id !== 'string' && typeof _req.id !== 'number') { // skip notifications
+    if (typeof _req.id !== "string" && typeof _req.id !== "number") {
+      // skip notifications
       return;
     }
 
