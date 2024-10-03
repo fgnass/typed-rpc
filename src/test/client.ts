@@ -1,5 +1,5 @@
 import "isomorphic-fetch";
-import WebSocket from "isomorphic-ws";
+import WS from "isomorphic-ws";
 import { serialize, deserialize } from "superjson";
 import tap from "tap";
 import { rpcClient, RpcError, websocketTransport } from "../client.js";
@@ -7,7 +7,7 @@ import type { Service } from "./service.js";
 import type { ComplexService } from "./complexService.js";
 
 const url = process.env.SERVER_URL + "/api";
-globalThis.WebSocket = WebSocket;
+globalThis.WebSocket = WS as any;
 
 tap.test("should talk to the server", async (t) => {
   const client = rpcClient<Service>(url);
