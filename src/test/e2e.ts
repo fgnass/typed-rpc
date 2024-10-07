@@ -62,7 +62,6 @@ tap.test("should pass error payload to client", async (t) => {
 
 tap.test("should support custom transports", async (t) => {
   const client = rpcClient<Service>({
-    url: "n/a",
     transport: async (req) => {
       return {
         jsonrpc: "2.0",
@@ -94,7 +93,6 @@ tap.test("should support custom transcoders", async (t) => {
 
 tap.test("should fail on invalid response", async (t) => {
   const client = rpcClient<Service>({
-    url: "n/a",
     transport: async (req) => {
       return {
         invalid: "",
@@ -127,7 +125,6 @@ tap.test("should use websocket", async (t) => {
   try {
     await new Promise<void>((resolve, reject) => {
       client = rpcClient<Service>({
-        url: "n/a",
         transport: websocketTransport({
           url: process.env.SERVER_URL + "/ws",
           timeout: 1000, // low timeout for testing

@@ -68,13 +68,13 @@ export type RpcTransport = (
 
 type RpcClientOptions =
   | string
-  | (FetchOptions & {
-      transport?: RpcTransport;
+  | ((FetchOptions | { transport: RpcTransport }) & {
       transcoder?: RpcTranscoder<any>;
     });
 
 type FetchOptions = {
   url: string;
+  transport?: never;
   credentials?: RequestCredentials;
   getHeaders?():
     | Record<string, string>
@@ -98,11 +98,20 @@ const identityTranscoder: RpcTranscoder<any> = {
 };
 
 export function rpcClient<T extends object>(options: RpcClientOptions) {
+  let transport: RpcTransport;
+  let transcoder: RpcTranscoder<any> = identityTranscoder;
+
   if (typeof options === "string") {
-    options = { url: options };
+    transport = fetchTransport({ url: options });
+  } else if ("transport" in options && options.transport) {
+    transport = options.transport;
+    transcoder = options.transcoder || identityTranscoder;
+  } else {
+    transport = fetchTransport(options);
+    transcoder = options.transcoder || identityTranscoder;
   }
-  const transport = options.transport || fetchTransport(options);
-  const { serialize, deserialize } = options.transcoder || identityTranscoder;
+
+  const { serialize, deserialize } = transcoder;
 
   /**
    * Send a request using the configured transport and handle the result.
