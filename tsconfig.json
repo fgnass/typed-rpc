@@ -1,13 +1,13 @@
 {
-	"compilerOptions": {
-		"target": "es2022",
-		"moduleDetection": "force",
-		"module": "preserve",
-		"strict": true,
-		"noImplicitOverride": true,
-		"noEmit": true,
-		"esModuleInterop": true,
-		"skipLibCheck": true,
-		"verbatimModuleSyntax": true,
-	}
+  "compilerOptions": {
+    "target": "es2022",
+    "moduleDetection": "force",
+    "module": "preserve",
+    "strict": true,
+    "noImplicitOverride": true,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "verbatimModuleSyntax": true
+  }
 }

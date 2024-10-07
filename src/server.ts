@@ -141,7 +141,7 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
     });
   }
   try {
-    const result = await service[method as keyof T](...params ?? []);
+    const result = await service[method as keyof T](...(params ?? []));
     return res({ result });
   } catch (err) {
     if (options?.onError) {
