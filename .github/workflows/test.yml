@@ -28,6 +28,7 @@ jobs:
         run: npm install
       - name: Run tests
         run: npm test
-      - name: Run typecheck
+      - name: Test types
         run: npm run typecheck
-
+      - name: Check formatting
+        run: npx prettier --check .
