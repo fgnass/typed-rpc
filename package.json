@@ -31,6 +31,16 @@
         "types": "./dist/server.d.cts",
         "default": "./dist/server.cjs"
       }
+    },
+    "./ws": {
+      "import": {
+        "types": "./dist/ws.d.mts",
+        "default": "./dist/ws.mjs"
+      },
+      "require": {
+        "types": "./dist/ws.d.cts",
+        "default": "./dist/ws.cjs"
+      }
     }
   },
   "scripts": {
