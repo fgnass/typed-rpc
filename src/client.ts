@@ -1,10 +1,44 @@
-import type {
-  JsonRpcRequest,
-  JsonRpcResponse,
-  RpcTranscoder,
+import {
+  type JsonRpcErrorResponse,
+  type JsonRpcRequest,
+  type JsonRpcResponse,
+  type RpcTranscoder,
 } from "./types.js";
 
 export * from "./types.js";
+
+/**
+ * Type guard to check if a given object is a valid JSON-RPC response.
+ */
+export function isJsonRpcResponse(res: unknown): res is JsonRpcResponse {
+  if (typeof res !== "object" || res === null) return false;
+  if (!("jsonrpc" in res) || res.jsonrpc !== "2.0") return false;
+  if (
+    !("id" in res) ||
+    (typeof res.id !== "string" &&
+      typeof res.id !== "number" &&
+      res.id !== null)
+  )
+    return false;
+
+  if ("result" in res) {
+    // Check for JsonRpcSuccessResponse
+    return !("error" in res);
+  } else if ("error" in res) {
+    // Check for JsonRpcErrorResponse
+    const error = (res as JsonRpcErrorResponse).error;
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "number" &&
+      "message" in error &&
+      typeof error.message === "string"
+    );
+  }
+
+  return false;
+}
 
 /**
  * Error class that is thrown if a remote method returns an error.
@@ -80,21 +114,16 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
   ) => {
     const req = createRequest(method, args);
     const raw = await transport(serialize(req as any), signal);
-    const res = deserialize(raw);
-    if (res?.jsonrpc !== "2.0") {
+    const res: unknown = deserialize(raw);
+    if (!isJsonRpcResponse(res)) {
       throw new TypeError("Not a JSON-RPC 2.0 response");
     }
-
     if ("error" in res) {
       const { code, message, data } = res.error;
       throw new RpcError(message, code, data);
-    }
-
-    if ("result" in res) {
+    } else {
       return res.result;
     }
-
-    throw new TypeError("Invalid response");
   };
 
   // Map of AbortControllers to abort pending requests
@@ -223,6 +252,7 @@ export function websocketTransport(
   const timeout = options.timeout ?? 60_000;
 
   let ws: WebSocket;
+
   function connect() {
     ws = new WebSocket(options.url.replace("http", "ws"));
 
@@ -231,15 +261,15 @@ export function websocketTransport(
     });
 
     ws.addEventListener("message", (e) => {
-      const raw = e.data.toString();
-      const res = JSON.parse(raw) as JsonRpcResponse;
-      if (typeof res.id !== "string" || typeof res.id !== "number") {
-        options.onMessageError?.(
-          new TypeError("Invalid response (missing id)")
-        );
+      const res: unknown = JSON.parse(e.data.toString());
+      if (!isJsonRpcResponse(res)) {
+        options.onMessageError?.(new TypeError("Invalid response"));
         return;
       }
-
+      if (res.id === null) {
+        // Ignore notifications
+        return;
+      }
       const request = requests.get(res.id);
       if (!request) {
         options.onMessageError?.(
@@ -253,7 +283,7 @@ export function websocketTransport(
         clearTimeout(request.timeoutId);
       }
 
-      request.resolve(raw);
+      request.resolve(res);
     });
 
     ws.addEventListener("close", (e) => {
@@ -271,15 +301,7 @@ export function websocketTransport(
   connect();
 
   return async (req, signal): Promise<any> => {
-    const _req: JsonRpcRequest =
-      typeof req === "string" ? JSON.parse(req) : req;
-
-    if (typeof _req.id !== "string" && typeof _req.id !== "number") {
-      // skip notifications
-      return;
-    }
-
-    const requestId = _req.id;
+    const requestId = req.id ?? -1;
 
     if (requests.has(requestId)) {
       throw new RpcError("Request already exists", -32000);
@@ -290,7 +312,8 @@ export function websocketTransport(
 
       if (timeout > 0) {
         request.timeoutId = setTimeout(() => {
-          reject(new RpcError("Request timed out", -32000));
+          console.log(`Request timed out. (id: ${requestId})`);
+          reject(new RpcError(`Request timed out. (id: ${requestId})`, -32000));
         }, timeout);
       }
 

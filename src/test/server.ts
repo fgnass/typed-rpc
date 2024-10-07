@@ -1,77 +1,126 @@
-import express from "express";
-import { serialize, deserialize } from "superjson";
-import { WebSocketServer } from "ws";
-import { createServer } from "node:http";
+import { isJsonRpcRequest, handleRpc } from "../server.js";
 
-import { handleRpc } from "../server.js";
-import { service } from "./service.js";
-import { RequestAwareService } from "./RequestAwareService.js";
-import { complexService } from "./complexService.js";
+import tap from "tap";
 
-const app = express();
+const service = {
+  hello(name: string) {
+    return `Hello ${name}!`;
+  },
+  throwError() {
+    throw new Error("Test error");
+  },
+  throwErrorWithCode() {
+    const error = new Error("Test error");
+    (error as any).code = 1234;
+    throw error;
+  },
+};
 
-app.use(express.json());
-
-app.use("/api", (req, res, next) => {
-  const status = req.header("Prefer-Status");
-  if (status) res.status(parseInt(status)).end();
-  else next();
+tap.test("isJsonRpcRequest", (t) => {
+  t.ok(
+    isJsonRpcRequest({ jsonrpc: "2.0", method: "test", id: 1 }),
+    "Valid request"
+  );
+  t.notOk(
+    isJsonRpcRequest('{ jsonrpc: "2.0", method: "test", id: 1 }'),
+    "string instead of object"
+  );
+  t.notOk(
+    isJsonRpcRequest({ jsonrpc: "1.0", method: "test", id: 1 }),
+    "Invalid jsonrpc version"
+  );
+  t.notOk(isJsonRpcRequest({ jsonrpc: "2.0", id: 1 }), "Missing method");
+  t.notOk(isJsonRpcRequest({ method: "test", id: 1 }), "Missing jsonrpc");
+  t.ok(
+    isJsonRpcRequest({ jsonrpc: "2.0", method: "test", params: [], id: 1 }),
+    "With params"
+  );
+  t.ok(
+    isJsonRpcRequest({ jsonrpc: "2.0", method: "test", id: null }),
+    "With null id"
+  );
+  t.end();
 });
 
-app.post("/api", (req, res, next) => {
-  handleRpc(req.body, service)
-    .then((result) => res.json(result))
-    .catch(next);
-});
+tap.test("handleRpc", async (t) => {
+  const result = await handleRpc(
+    { jsonrpc: "2.0", method: "hello", params: ["World"], id: 1 },
+    service
+  );
 
-app.post("/request-aware-api", (req, res, next) => {
-  handleRpc(req.body, new RequestAwareService(req.headers))
-    .then((result) => res.json(result))
-    .catch(next);
-});
+  t.same(
+    result,
+    { jsonrpc: "2.0", id: 1, result: "Hello World!" },
+    "Handles valid RPC request"
+  );
 
-app.post("/error-masked-api", (req, res, next) => {
-  handleRpc(req.body, service, {
-    getErrorMessage: (error: unknown) => "Something went wrong",
-    getErrorCode: (error: unknown) => 100,
-  })
-    .then((result) => res.json(result))
-    .catch(next);
-});
+  const errorResult = await handleRpc(
+    { jsonrpc: "2.0", method: "nonexistent", id: 2 },
+    service
+  );
 
-app.post("/complex-api", (req, res, next) => {
-  handleRpc(req.body, complexService, {
-    transcoder: { serialize, deserialize },
-    getErrorMessage: (error: unknown) => "Something went wrong",
-    getErrorCode: (error: unknown) => 100,
-  })
-    .then((result) => res.json(result))
-    .catch(next);
-});
+  t.same(
+    errorResult,
+    {
+      jsonrpc: "2.0",
+      id: 2,
+      error: { code: -32601, message: "Method not found: nonexistent" },
+    },
+    "Handles non-existent method"
+  );
 
-const server = createServer(app);
+  const invalidRequest = await handleRpc(
+    { method: "hello", params: ["World"] },
+    service
+  );
 
-const wss = new WebSocketServer({
-  path: "/ws",
-  server,
-});
+  t.same(
+    invalidRequest,
+    {
+      jsonrpc: "2.0",
+      id: null,
+      error: { code: -32600, message: "Invalid Request" },
+    },
+    "Handles invalid JSON-RPC request"
+  );
 
-wss.on("connection", (ws) => {
-  ws.on("error", console.error);
+  const errorThrowingResult = await handleRpc(
+    { jsonrpc: "2.0", method: "throwError", id: 3 },
+    service
+  );
 
-  ws.on("message", (data) => {
-    handleRpc(data.toString(), service, {
-      transcoder: {
-        serialize: JSON.stringify,
-        deserialize: JSON.parse,
+  t.same(
+    errorThrowingResult,
+    {
+      jsonrpc: "2.0",
+      id: 3,
+      error: {
+        code: -32000,
+        message: "Test error",
+        data: undefined,
       },
-      getErrorMessage: (error: unknown) => "Something went wrong",
-      getErrorCode: (error: unknown) => 100,
-    }).then((result) => ws.send(JSON.stringify(result)));
-  });
-});
+    },
+    "Handles service method that throws an error"
+  );
 
-const port = process.env.PORT || 3000;
-server.listen(port, () => {
-  console.log("Server listening on http://localhost:%s", port);
+  const errorThrowingResultWithCode = await handleRpc(
+    { jsonrpc: "2.0", method: "throwErrorWithCode", id: 4 },
+    service
+  );
+
+  t.same(
+    errorThrowingResultWithCode,
+    {
+      jsonrpc: "2.0",
+      id: 4,
+      error: {
+        code: 1234,
+        message: "Test error",
+        data: undefined,
+      },
+    },
+    "Handles service method that throws an error with code"
+  );
+
+  t.end();
 });
