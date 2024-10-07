@@ -51,8 +51,8 @@ type FetchOptions = {
 type Promisify<T> = T extends (...args: any[]) => Promise<any>
   ? T // already a promise
   : T extends (...args: infer A) => infer R
-  ? (...args: A) => Promise<R>
-  : T; // not a function;
+    ? (...args: A) => Promise<R>
+    : T; // not a function;
 
 type PromisifyMethods<T extends object> = {
   [K in keyof T]: Promisify<T[K]>;
