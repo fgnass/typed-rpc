@@ -24,6 +24,11 @@ export class RequestAwareService implements Service {
     throw err;
   }
 
+  async sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    return "Operation completed";
+  }
+
   echoHeader(name: string) {
     return this.headers?.[name.toLowerCase()] ?? null;
   }

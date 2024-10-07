@@ -2,9 +2,10 @@ import "isomorphic-fetch";
 import WS from "isomorphic-ws";
 import { serialize, deserialize } from "superjson";
 import tap from "tap";
-import { rpcClient, RpcError, websocketTransport } from "../client.js";
+import { rpcClient, RpcError } from "../client.js";
 import type { Service } from "../e2e/service.js";
 import type { ComplexService } from "../e2e/complexService.js";
+import { websocketTransport } from "../ws.js";
 
 const url = process.env.SERVER_URL + "/api";
 globalThis.WebSocket = WS as any;
@@ -141,6 +142,39 @@ tap.test("should use websocket", async (t) => {
     });
     const result = await client!.hello("world");
     t.equal(result, "Hello world!");
+
+    const promise = client!.sorry("Dave");
+    t.rejects(promise, new RpcError("Something went wrong", 100));
+  } finally {
+    ws?.close();
+  }
+});
+
+tap.test("should timeout on websocket", async (t) => {
+  type Client = ReturnType<typeof rpcClient<Service>>;
+  let client: Client | undefined;
+  let ws: WebSocket | undefined;
+  try {
+    await new Promise<void>((resolve, reject) => {
+      client = rpcClient<Service>({
+        transport: websocketTransport({
+          url: process.env.SERVER_URL + "/ws",
+          timeout: 100, // Very short timeout for testing
+          reconnectTimeout: 0, // disable reconnect
+          onOpen(e, _ws) {
+            ws = _ws;
+            resolve();
+          },
+          onMessageError(err) {
+            reject(err);
+          },
+        }),
+      });
+    });
+
+    // Call a method that will take longer than the timeout
+    const promise = client!.sleep(1000);
+    await t.rejects(promise, new RpcError("Request timed out", -32000));
   } finally {
     ws?.close();
   }

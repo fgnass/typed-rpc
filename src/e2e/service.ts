@@ -15,6 +15,11 @@ export const service = {
     throw err;
   },
 
+  async sleep(ms: number) {
+    await new Promise((resolve) => setTimeout(resolve, ms));
+    return "Operation completed";
+  },
+
   echoHeader(name: string): string | string[] | null {
     throw new Error("This service can't access request headers");
   },
