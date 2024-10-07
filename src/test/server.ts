@@ -67,7 +67,7 @@ wss.on("connection", (ws) => {
       },
       getErrorMessage: (error: unknown) => "Something went wrong",
       getErrorCode: (error: unknown) => 100,
-    }).then((result) => ws.send(JSON.stringify(result)));
+    }).then((result) => ws.send(result));
   });
 });
 

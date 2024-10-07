@@ -127,6 +127,10 @@ tap.test("should use websocket", async (t) => {
     await new Promise<void>((resolve, reject) => {
       client = rpcClient<Service>({
         url: "n/a",
+        transcoder: {
+          serialize: JSON.stringify,
+          deserialize: JSON.parse,
+        },
         transport: websocketTransport({
           url: process.env.SERVER_URL + "/ws",
           timeout: 1000, // low timeout for testing

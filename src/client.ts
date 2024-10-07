@@ -51,8 +51,8 @@ type FetchOptions = {
 type Promisify<T> = T extends (...args: any[]) => Promise<any>
   ? T // already a promise
   : T extends (...args: infer A) => infer R
-  ? (...args: A) => Promise<R>
-  : T; // not a function;
+    ? (...args: A) => Promise<R>
+    : T; // not a function;
 
 type PromisifyMethods<T extends object> = {
   [K in keyof T]: Promisify<T[K]>;
@@ -233,7 +233,7 @@ export function websocketTransport(
     ws.addEventListener("message", (e) => {
       const raw = e.data.toString();
       const res = JSON.parse(raw) as JsonRpcResponse;
-      if (typeof res.id !== "string" || typeof res.id !== "number") {
+      if (typeof res.id !== "string" && typeof res.id !== "number") {
         options.onMessageError?.(
           new TypeError("Invalid response (missing id)")
         );
@@ -303,7 +303,8 @@ export function websocketTransport(
 
       requests.set(requestId, request);
 
-      ws.send(JSON.stringify(req));
+      console.log("sending", req);
+      ws.send(req as any);
     });
 
     return res;
