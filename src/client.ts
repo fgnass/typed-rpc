@@ -172,13 +172,15 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
   }) as typeof target & PromisifyMethods<T>;
 }
 
+let id = 1;
+
 /**
  * Create a JsonRpcRequest for the given method.
  */
 export function createRequest(method: string, params?: any[]): JsonRpcRequest {
   const req: JsonRpcRequest = {
     jsonrpc: "2.0",
-    id: Date.now(),
+    id: id++,
     method,
   };
 
