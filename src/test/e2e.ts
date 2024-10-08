@@ -6,6 +6,36 @@ import { rpcClient, RpcError } from "../client.js";
 import type { Service } from "../e2e/service.js";
 import type { ComplexService } from "../e2e/complexService.js";
 import { websocketTransport } from "../ws.js";
+import type { BrokenService } from "../e2e/BrokenService.js";
+
+function createWebSocketClient<T extends object>(options: {
+  url: string;
+  timeout?: number;
+  reconnectTimeout?: number;
+  onOpen?: (ws: WebSocket) => void;
+  onMessageError?: (err: unknown) => void;
+}) {
+  let ws: WebSocket;
+  const client = rpcClient<T>({
+    transport: websocketTransport({
+      url: options.url,
+      timeout: options.timeout ?? 100,
+      reconnectTimeout: options.reconnectTimeout ?? 0,
+      onOpen(e, _ws) {
+        ws = _ws;
+        options.onOpen?.(ws);
+      },
+      onMessageError: options.onMessageError,
+    }),
+  });
+
+  return {
+    client,
+    closeWs: (code?: number, reason?: string) => {
+      ws?.close(code, reason);
+    },
+  };
+}
 
 const url = process.env.SERVER_URL + "/api";
 globalThis.WebSocket = WS as any;
@@ -120,62 +150,94 @@ tap.test("should not relay internal methods", async (t) => {
 });
 
 tap.test("should use websocket", async (t) => {
-  type Client = ReturnType<typeof rpcClient<Service>>;
-  let client: Client | undefined;
-  let ws: WebSocket | undefined;
-  try {
-    await new Promise<void>((resolve, reject) => {
-      client = rpcClient<Service>({
-        transport: websocketTransport({
-          url: process.env.SERVER_URL + "/ws",
-          timeout: 1000, // low timeout for testing
-          reconnectTimeout: 0, // disable reconnect
-          onOpen(e, _ws) {
-            ws = _ws;
-            resolve();
-          },
-          onMessageError(err) {
-            reject(err);
-          },
-        }),
-      });
-    });
-    const result = await client!.hello("world");
-    t.equal(result, "Hello world!");
+  const { client, closeWs } = createWebSocketClient<Service>({
+    url: process.env.SERVER_URL + "/ws",
+    onMessageError: (err: any) => {
+      t.fail(err);
+    },
+  });
 
-    const promise = client!.sorry("Dave");
-    t.rejects(promise, new RpcError("Something went wrong", 100));
+  try {
+    t.equal(await client.hello("world"), "Hello world!");
+    t.equal(await client.greet("Hi", "all"), "Hi all!");
   } finally {
-    ws?.close();
+    closeWs();
   }
 });
 
-tap.test("should timeout on websocket", async (t) => {
-  type Client = ReturnType<typeof rpcClient<Service>>;
-  let client: Client | undefined;
-  let ws: WebSocket | undefined;
-  try {
-    await new Promise<void>((resolve, reject) => {
-      client = rpcClient<Service>({
-        transport: websocketTransport({
-          url: process.env.SERVER_URL + "/ws",
-          timeout: 100, // Very short timeout for testing
-          reconnectTimeout: 0, // disable reconnect
-          onOpen(e, _ws) {
-            ws = _ws;
-            resolve();
-          },
-          onMessageError(err) {
-            reject(err);
-          },
-        }),
-      });
-    });
+tap.test("should handle errors via websocket", async (t) => {
+  const { client, closeWs } = createWebSocketClient<Service>({
+    url: process.env.SERVER_URL + "/ws",
+    onMessageError: (err: any) => {
+      t.fail(err);
+    },
+  });
 
-    // Call a method that will take longer than the timeout
-    const promise = client!.sleep(1000);
-    await t.rejects(promise, new RpcError("Request timed out", -32000));
-  } finally {
-    ws?.close();
-  }
+  const promise = client.sorry("Dave");
+  await t.rejects(promise, new RpcError("Something went wrong", 100));
+  t.teardown(closeWs);
+});
+
+tap.test("should timeout on websocket", async (t) => {
+  const { client, closeWs } = createWebSocketClient<Service>({
+    url: process.env.SERVER_URL + "/ws",
+    onMessageError: (err: any) => {
+      t.fail(err);
+    },
+  });
+
+  // Call a method that will take longer than the timeout
+  const promise = client.sleep(1000);
+  await t.rejects(promise, new RpcError("Request timed out", -32000));
+  t.teardown(closeWs);
+});
+
+tap.test("should reconnect on WebSocket close", async (t) => {
+  let reconnectCount = 0;
+  const { client, closeWs } = createWebSocketClient<Service>({
+    url: process.env.SERVER_URL + "/ws",
+    reconnectTimeout: 100,
+    onOpen: (_ws) => {
+      reconnectCount++;
+    },
+    onMessageError: (err: any) => {
+      t.fail(err);
+    },
+  });
+
+  // Wait for initial connection
+  await t.resolves(client.hello("world"));
+  t.equal(reconnectCount, 1, "Initial connection established");
+
+  // Force reconnect
+  closeWs(1000, "reconnect");
+
+  // Wait for reconnection
+  await new Promise((resolve) => setTimeout(resolve, 200));
+
+  // Verify reconnection
+  await t.resolves(client.hello("world"));
+  t.equal(reconnectCount, 2, "Reconnection successful");
+
+  closeWs();
+});
+
+tap.test("should handle invalid response from WebSocket", async (t) => {
+  const promise = new Promise((_resolve, reject) => {
+    const { client, closeWs } = createWebSocketClient<BrokenService>({
+      url: process.env.SERVER_URL + "/broken-ws",
+      onMessageError: reject,
+    });
+    t.teardown(closeWs);
+    client.sendInvalidVersion();
+  });
+  await t.rejects(promise, new TypeError("Invalid response"));
+});
+
+tap.test("should handle errors during send", async (t) => {
+  const { client, closeWs } = createWebSocketClient<Service>({
+    url: process.env.SERVER_URL + "/404",
+  });
+  t.teardown(closeWs);
+  await t.rejects(client.hello("world"), new Error("socket hang up"));
 });
