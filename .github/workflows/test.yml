@@ -1,16 +1,5 @@
 name: Test
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-permissions:
-  checks: write
-  contents: write
+on: [push, pull_request]
 
 jobs:
   test:
