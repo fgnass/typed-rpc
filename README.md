@@ -8,8 +8,9 @@ Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeS
 - 📜 JSON-RPC 2.0 protocol
 - 🕵️ Full IDE autocompletion
 - 🪶 Tiny footprint (< 1kB)
-- 🚚 Support for custom transports
 - 🏝️ Optional support for non-JSON types
+- 🚚 Support for custom transports
+- 🔌 Optional websocket support
 - 🌎 Support for Deno and edge runtimes
 - 🚫 No code generation step
 - 🚫 No dependencies
@@ -169,6 +170,21 @@ const client = rpcClient<MyService>({
 });
 ```
 
+### Websockets
+
+Typed-rpc comes with an alternative transport that uses websockets:
+
+```ts
+import { websocketTransport } from "typed-rpc/ws";
+
+import
+const client = rpcClient<MyService>({
+  transport: websocketTransport({
+    url: "wss://websocket.example.org"
+  })
+});
+```
+
 ## Support for Other Runtimes
 
 `typed-rpc/server` can be used with any server framework or edge runtime.
@@ -252,10 +268,9 @@ Pair `typed-rpc` with [react-api-query](https://www.npmjs.com/package/react-api-
 
 ## What's new in v6
 
-* Services can now expose APIs with non-JSON types like Dates, Maps, Sets, etc. by plugging in a [transcoder](#support-for-non-json-types) like superjson.
-* Previously, typed-rpc only shipped a CommonJS build in `/lib` and Deno users would directily consume the TypeScript code in `/src`. We now use [pkgroll](https://github.com/privatenumber/pkgroll) to create a hybrid module in `/dist` with both `.mjs` and `.cjs` files.
-* We removed the previously included express adapter to align with the core philosopy of keeping things as simple as possible.
-
+- Services can now expose APIs with non-JSON types like Dates, Maps, Sets, etc. by plugging in a [transcoder](#support-for-non-json-types) like superjson.
+- Previously, typed-rpc only shipped a CommonJS build in `/lib` and Deno users would directily consume the TypeScript code in `/src`. We now use [pkgroll](https://github.com/privatenumber/pkgroll) to create a hybrid module in `/dist` with both `.mjs` and `.cjs` files.
+- We removed the previously included express adapter to align with the core philosopy of keeping things as simple as possible.
 
 ## License
 
