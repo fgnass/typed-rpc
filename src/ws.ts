@@ -47,7 +47,7 @@ export function websocketTransport(
 
   function connect() {
     wsPromise = new Promise((resolve, reject) => {
-      const ws = new WebSocket(options.url.replace("http", "ws"));
+      const ws = new WebSocket(options.url);
       ws.addEventListener("open", (ev) => {
         options.onOpen?.(ev, ws);
         resolve(ws);
