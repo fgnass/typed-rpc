@@ -15,10 +15,10 @@ jobs:
           node-version: 18
       - name: Install dependencies
         run: npm install
+      - name: Check types
+        run: npm run typecheck
       - name: Run tests
         run: npm test
-      - name: Run typecheck
-        run: npm run typecheck
       - name: Publish Preview Release
         run: npx pkg-pr-new publish
 
