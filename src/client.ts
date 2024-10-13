@@ -1,7 +1,8 @@
-import type {
-  JsonRpcRequest,
-  JsonRpcResponse,
-  RpcTranscoder,
+import {
+  type JsonRpcRequest,
+  type JsonRpcResponse,
+  type RpcTranscoder,
+  NOTIFY_MARKER,
 } from "./types.js";
 
 export * from "./types.js";
@@ -29,15 +30,16 @@ export class RpcError extends Error {
  */
 export type RpcTransport = (
   req: JsonRpcRequest,
-  abortSignal: AbortSignal
+  abortSignal: AbortSignal,
+  notify: (raw: any) => boolean
 ) => Promise<JsonRpcResponse>;
 
 type RpcClientOptions =
   | string
   | (FetchOptions & {
-      transport?: RpcTransport;
-      transcoder?: RpcTranscoder<any>;
-    });
+    transport?: RpcTransport;
+    transcoder?: RpcTranscoder<any>;
+  });
 
 type FetchOptions = {
   url: string;
@@ -79,7 +81,19 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     signal: AbortSignal
   ) => {
     const req = createRequest(method, args);
-    const raw = await transport(serialize(req as any), signal);
+    if (req.params) {
+      req.params = req.params.map((param, index) =>
+          typeof param === 'function' ? { type: NOTIFY_MARKER, index } : param
+      );
+    }
+    const raw = await transport(serialize(req as any), signal, raw => {
+      const notify = deserialize(raw);
+      if (NOTIFY_MARKER in notify && typeof args[notify[NOTIFY_MARKER]] === 'function') {
+        args[notify[NOTIFY_MARKER]](...notify.params);
+        return false;
+      }
+      return true;
+    });;
     const res = deserialize(raw);
     if ("result" in res) {
       return res.result;
