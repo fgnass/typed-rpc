@@ -28,3 +28,5 @@ export type RpcTranscoder<T> = {
   serialize: (data: T) => any;
   deserialize: (data: any) => T;
 };
+
+export const NOTIFY_MARKER = '__notify__';

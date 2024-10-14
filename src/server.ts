@@ -1,8 +1,9 @@
-import type {
-  JsonRpcRequest,
-  JsonRpcErrorResponse,
-  JsonRpcSuccessResponse,
-  RpcTranscoder,
+import {
+  type JsonRpcRequest,
+  type JsonRpcErrorResponse,
+  type JsonRpcSuccessResponse,
+  type RpcTranscoder,
+  NOTIFY_MARKER,
 } from "./types.js";
 
 export * from "./types.js";
@@ -112,6 +113,7 @@ export type RpcHandlerOptions<V> = {
   getErrorCode?: (err: unknown) => number;
   getErrorMessage?: (err: unknown) => string;
   getErrorData?: (err: unknown) => unknown;
+  onNotify?: (result: JsonRpcSuccessResponse) => void;
 };
 
 export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
@@ -134,13 +136,27 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
     //The JSON sent is not a valid Request object
     return res({ error: { code: -32600, message: "Invalid Request" } });
   }
-  const { method, params } = req;
+  let { method, params } = req;
   if (!hasMethod(service, method)) {
     return res({
       error: { code: -32601, message: `Method not found: ${method}` },
     });
   }
   try {
+    if (params) {
+      params = params.map((param, index) => {
+        if (typeof param === 'object' && param.type === NOTIFY_MARKER) {
+          return (...params: JsonValue[]) => {
+            if (options?.onNotify) {
+              const data: any = { params };
+              data[NOTIFY_MARKER] = index;
+              options.onNotify(res(data));
+            }
+          };
+        }
+        return param;
+      });
+    }
     const result = await service[method as keyof T](...params ?? []);
     return res({ result });
   } catch (err) {
