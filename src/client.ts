@@ -30,7 +30,7 @@ export class RpcError extends Error {
 export type RpcTransport = (
   req: JsonRpcRequest,
   abortSignal: AbortSignal
-) => Promise<JsonRpcResponse>;
+) => Promise<JsonRpcResponse | void>;
 
 type RpcClientOptions =
   | string
@@ -90,7 +90,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     throw new TypeError("Invalid response");
   };
 
-  async function sendNotification(method: string, ...args: any[]): Promise<Promise<any>> {
+  async function sendNotification(method: string, ...args: any[]): Promise<Promise<void>> {
     const req = createRequest(undefined, method, args);
     const ac = new AbortController();
     const promise = transport(serialize(req as any), ac.signal);
@@ -101,7 +101,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
         abortControllers.delete(promise);
       })
       .catch(() => {});
-    return promise;
+    return promise as Promise<void>;
   }
 
   // Map of AbortControllers to abort pending requests
