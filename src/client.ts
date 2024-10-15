@@ -78,7 +78,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     args: any[],
     signal: AbortSignal
   ) => {
-    const req = createRequest(method, args);
+    const req = createRequest(Date.now(), method, args);
     const raw = await transport(serialize(req as any), signal);
     const res = deserialize(raw);
     if ("result" in res) {
@@ -89,6 +89,20 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     }
     throw new TypeError("Invalid response");
   };
+
+  async function sendNotification(method: string, ...args: any[]): Promise<Promise<any>> {
+    const req = createRequest(undefined, method, args);
+    const ac = new AbortController();
+    const promise = transport(serialize(req as any), ac.signal);
+    abortControllers.set(promise, ac);
+    promise
+      .finally(() => {
+        // Remove the
+        abortControllers.delete(promise);
+      })
+      .catch(() => {});
+    return promise;
+  }
 
   // Map of AbortControllers to abort pending requests
   const abortControllers = new WeakMap<Promise<any>, AbortController>();
@@ -101,6 +115,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
       const ac = abortControllers.get(promise);
       ac?.abort();
     },
+    $notify: sendNotification,
   };
 
   return new Proxy(target, {
@@ -130,12 +145,15 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
 /**
  * Create a JsonRpcRequest for the given method.
  */
-export function createRequest(method: string, params?: any[]): JsonRpcRequest {
+function createRequest(id: JsonRpcRequest['id'], method: string, params?: any[]): JsonRpcRequest {
   const req: JsonRpcRequest = {
     jsonrpc: "2.0",
-    id: Date.now(),
     method,
   };
+
+  if (id) {
+    req.id = id;
+  }
 
   if (params?.length) {
     req.params = removeTrailingUndefs(params);
