@@ -116,3 +116,28 @@ tap.test("should not relay internal methods", async (t) => {
   //@ts-expect-error
   client[Symbol()];
 });
+
+tap.test("should not notify", async (t) => {
+  let client: ReturnType<typeof rpcClient<Service>>;
+
+  const request = new Promise((resolve) => {
+    client = rpcClient<Service>({
+      url: 'n/a',
+      transport: async (req) => {
+        resolve(req);
+      },
+    });
+  });
+
+  const res = await Promise.all([
+    client!.$notify("hello", "world"),
+    request,
+  ]);
+  t.equal(res[0], undefined);
+  t.same(res[1], {
+    "jsonrpc": "2.0",
+    "method": "hello",
+    "params": ["world"],
+    // no id
+  });
+});
