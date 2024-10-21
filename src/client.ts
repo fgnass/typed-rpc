@@ -32,11 +32,14 @@ export type RpcTransport = (
   abortSignal: AbortSignal
 ) => Promise<JsonRpcResponse>;
 
+export type RpcUUID = () => number | string;
+
 type RpcClientOptions =
   | string
   | (FetchOptions & {
       transport?: RpcTransport;
       transcoder?: RpcTranscoder<any>;
+      uuid?: RpcUUID;
     });
 
 type FetchOptions = {
@@ -78,7 +81,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     args: any[],
     signal: AbortSignal
   ) => {
-    const req = createRequest(method, args);
+    const req = createRequest(method, args, options.uuid);
     const raw = await transport(serialize(req as any), signal);
     const res = deserialize(raw);
     if ("result" in res) {
@@ -130,10 +133,10 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
 /**
  * Create a JsonRpcRequest for the given method.
  */
-export function createRequest(method: string, params?: any[]): JsonRpcRequest {
+export function createRequest(method: string, params?: any[], uuid?: RpcUUID): JsonRpcRequest {
   const req: JsonRpcRequest = {
     jsonrpc: "2.0",
-    id: Date.now(),
+    id: uuid ? uuid() : Date.now().toString(36) + Math.random().toString(36).substring(2),
     method,
   };
 
