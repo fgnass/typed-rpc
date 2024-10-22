@@ -66,10 +66,13 @@ export type RpcTransport = (
   abortSignal: AbortSignal
 ) => Promise<JsonRpcResponse>;
 
+export type RpcUuid = () => number | string;
+
 type RpcClientOptions =
   | string
   | ((FetchOptions | { transport: RpcTransport }) & {
       transcoder?: RpcTranscoder<any>;
+      uuid?: RpcUuid;
     });
 
 type FetchOptions = {
@@ -100,15 +103,18 @@ const identityTranscoder: RpcTranscoder<any> = {
 export function rpcClient<T extends object>(options: RpcClientOptions) {
   let transport: RpcTransport;
   let transcoder: RpcTranscoder<any> = identityTranscoder;
+  let uuid: RpcUuid | undefined;
 
   if (typeof options === "string") {
     transport = fetchTransport({ url: options });
   } else if ("transport" in options && options.transport) {
     transport = options.transport;
     transcoder = options.transcoder || identityTranscoder;
+    uuid = options.uuid;
   } else {
     transport = fetchTransport(options);
     transcoder = options.transcoder || identityTranscoder;
+    uuid = options.uuid;
   }
 
   const { serialize, deserialize } = transcoder;
@@ -121,7 +127,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     args: any[],
     signal: AbortSignal
   ) => {
-    const req = createRequest(method, args);
+    const req = createRequest(method, args, uuid);
     const raw = await transport(serialize(req as any), signal);
     const res: unknown = deserialize(raw);
     if (!isJsonRpcResponse(res)) {
@@ -172,15 +178,13 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
   }) as typeof target & PromisifyMethods<T>;
 }
 
-let id = 1;
-
 /**
  * Create a JsonRpcRequest for the given method.
  */
-export function createRequest(method: string, params?: any[]): JsonRpcRequest {
+export function createRequest(method: string, params?: any[], uuid?: RpcUuid): JsonRpcRequest {
   const req: JsonRpcRequest = {
     jsonrpc: "2.0",
-    id: id++,
+    id: uuid ? uuid() : Date.now().toString(36) + Math.random().toString(36).substring(2),
     method,
   };
 
