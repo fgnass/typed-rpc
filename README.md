@@ -266,7 +266,14 @@ handleRpc(json, dateService, { transcoder });
 
 Pair `typed-rpc` with [react-api-query](https://www.npmjs.com/package/react-api-query) for UI framework integration.
 
-## What's new in v6
+# Changelog
+
+### 6.1.0
+
+- Built-in support for [websockets](#websockets).
+- Pluggable request ID generator with better default (date + random string)
+
+### 6.0.0
 
 - Services can now expose APIs with non-JSON types like Dates, Maps, Sets, etc. by plugging in a [transcoder](#support-for-non-json-types) like superjson.
 - Previously, typed-rpc only shipped a CommonJS build in `/lib` and Deno users would directily consume the TypeScript code in `/src`. We now use [pkgroll](https://github.com/privatenumber/pkgroll) to create a hybrid module in `/dist` with both `.mjs` and `.cjs` files.
