@@ -2,7 +2,6 @@
 
 ![bundle size](https://badgen.net/bundlephobia/minzip/typed-rpc)
 ![dependencies](https://badgen.net/bundlephobia/dependency-count/typed-rpc)
-![tree shaking](https://badgen.net/bundlephobia/tree-shaking/typed-rpc)
 
 Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects with the following features:
 
