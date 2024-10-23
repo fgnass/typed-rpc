@@ -52,8 +52,10 @@
     "build": "pkgroll --clean-dist --sourcemap",
     "start": "tsx src/e2e/server.ts",
     "test": "with-server tap",
-    "prepare": "npm run build",
-    "typecheck": "tsc --noEmit"
+    "prepare": "npm run check && npm run build",
+    "check": "npm run check:types && npm run check:format",
+    "check:format": "prettier --check .",
+    "check:types": "tsc --noEmit"
   },
   "author": "Felix Gnass <fgnass@gmail.com>",
   "repository": "fgnass/typed-rpc",
@@ -67,6 +69,7 @@
     "isomorphic-fetch": "^3.0.0",
     "isomorphic-ws": "^5.0.0",
     "pkgroll": "^2.5.0",
+    "prettier": "^3.3.3",
     "superjson": "^2.2.1",
     "tap": "^21.0.1",
     "tsx": "^4.19.1",

@@ -15,10 +15,9 @@ jobs:
           node-version: 20
       - name: Install dependencies
         run: npm install
-      - name: Check types
-        run: npm run typecheck
+      - name: Check types and formatting
+        run: npm run check
       - name: Run tests
         run: npm test
       - name: Publish Preview Release
         run: npx pkg-pr-new publish
-
