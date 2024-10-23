@@ -1,13 +1,15 @@
 # typed-rpc
 
-![npm bundle size](https://img.shields.io/bundlephobia/minzip/typed-rpc)
+![bundle size](https://badgen.net/bundlephobia/minzip/typed-rpc)
+![dependencies](https://badgen.net/bundlephobia/dependency-count/typed-rpc)
+![tree shaking](https://badgen.net/bundlephobia/tree-shaking/typed-rpc)
 
 Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects with the following features:
 
 - 👩‍🔧 Service definition via TypeScript types
 - 📜 JSON-RPC 2.0 protocol
 - 🕵️ Full IDE autocompletion
-- 🪶 Tiny footprint (< 1kB)
+- 🪶 Tiny footprint
 - 🏝️ Optional support for non-JSON types
 - 🚚 Support for custom transports
 - 🔌 Optional websocket support
@@ -267,6 +269,10 @@ handleRpc(json, dateService, { transcoder });
 Pair `typed-rpc` with [react-api-query](https://www.npmjs.com/package/react-api-query) for UI framework integration.
 
 # Changelog
+
+### 6.1.1
+
+- Add back `"main"` and `"module"` entry points in `package.json` in addition to the exports map.
 
 ### 6.1.0
 
