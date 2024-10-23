@@ -1,8 +1,7 @@
-import type {
-  JsonRpcRequest,
-  JsonRpcErrorResponse,
-  JsonRpcSuccessResponse,
-  RpcTranscoder,
+import {
+  type JsonRpcRequest,
+  type JsonRpcResponse,
+  type RpcTranscoder,
 } from "./types.js";
 
 export * from "./types.js";
@@ -10,11 +9,18 @@ export * from "./types.js";
 /**
  * Type guard to check if a given object is a valid JSON-RPC request.
  */
-export function isJsonRpcRequest(req: any): req is JsonRpcRequest {
-  if (req.jsonrpc !== "2.0") return false;
-  if (typeof req.method !== "string") return false;
-  if (!Array.isArray(req.params) && req.params !== undefined) return false;
-  return true;
+export function isJsonRpcRequest(req: unknown): req is JsonRpcRequest {
+  if (typeof req !== "object" || req === null) return false;
+  const request = req as Partial<JsonRpcRequest>;
+  return (
+    request.jsonrpc === "2.0" &&
+    typeof request.method === "string" &&
+    (request.id === undefined ||
+      typeof request.id === "string" ||
+      typeof request.id === "number" ||
+      request.id === null) &&
+    (request.params === undefined || Array.isArray(request.params))
+  );
 }
 
 /**
@@ -118,7 +124,7 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
   request: unknown,
   service: T,
   options?: RpcHandlerOptions<V>
-): Promise<JsonRpcErrorResponse | JsonRpcSuccessResponse> {
+): Promise<JsonRpcResponse> {
   const req = options?.transcoder?.deserialize(request) ?? request;
   const id = getRequestId(req);
   const res = (data: any) => {
@@ -141,7 +147,7 @@ export async function handleRpc<T extends RpcService<T, V>, V = JsonValue>(
     });
   }
   try {
-    const result = await service[method as keyof T](...params ?? []);
+    const result = await service[method as keyof T](...(params ?? []));
     return res({ result });
   } catch (err) {
     if (options?.onError) {

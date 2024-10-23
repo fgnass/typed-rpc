@@ -1,10 +1,44 @@
-import type {
-  JsonRpcRequest,
-  JsonRpcResponse,
-  RpcTranscoder,
+import {
+  type JsonRpcErrorResponse,
+  type JsonRpcRequest,
+  type JsonRpcResponse,
+  type RpcTranscoder,
 } from "./types.js";
 
 export * from "./types.js";
+
+/**
+ * Type guard to check if a given object is a valid JSON-RPC response.
+ */
+export function isJsonRpcResponse(res: unknown): res is JsonRpcResponse {
+  if (typeof res !== "object" || res === null) return false;
+  if (!("jsonrpc" in res) || res.jsonrpc !== "2.0") return false;
+  if (
+    !("id" in res) ||
+    (typeof res.id !== "string" &&
+      typeof res.id !== "number" &&
+      res.id !== null)
+  )
+    return false;
+
+  if ("result" in res) {
+    // Check for JsonRpcSuccessResponse
+    return !("error" in res);
+  } else if ("error" in res) {
+    // Check for JsonRpcErrorResponse
+    const error = (res as JsonRpcErrorResponse).error;
+    return (
+      typeof error === "object" &&
+      error !== null &&
+      "code" in error &&
+      typeof error.code === "number" &&
+      "message" in error &&
+      typeof error.message === "string"
+    );
+  }
+
+  return false;
+}
 
 /**
  * Error class that is thrown if a remote method returns an error.
@@ -32,15 +66,18 @@ export type RpcTransport = (
   abortSignal: AbortSignal
 ) => Promise<JsonRpcResponse>;
 
+export type RpcUuid = () => number | string;
+
 type RpcClientOptions =
   | string
-  | (FetchOptions & {
-      transport?: RpcTransport;
+  | ((FetchOptions | { transport: RpcTransport }) & {
       transcoder?: RpcTranscoder<any>;
+      uuid?: RpcUuid;
     });
 
 type FetchOptions = {
   url: string;
+  transport?: never;
   credentials?: RequestCredentials;
   getHeaders?():
     | Record<string, string>
@@ -64,11 +101,23 @@ const identityTranscoder: RpcTranscoder<any> = {
 };
 
 export function rpcClient<T extends object>(options: RpcClientOptions) {
+  let transport: RpcTransport;
+  let transcoder: RpcTranscoder<any> = identityTranscoder;
+  let uuid: RpcUuid | undefined;
+
   if (typeof options === "string") {
-    options = { url: options };
+    transport = fetchTransport({ url: options });
+  } else if ("transport" in options && options.transport) {
+    transport = options.transport;
+    transcoder = options.transcoder || identityTranscoder;
+    uuid = options.uuid;
+  } else {
+    transport = fetchTransport(options);
+    transcoder = options.transcoder || identityTranscoder;
+    uuid = options.uuid;
   }
-  const transport = options.transport || fetchTransport(options);
-  const { serialize, deserialize } = options.transcoder || identityTranscoder;
+
+  const { serialize, deserialize } = transcoder;
 
   /**
    * Send a request using the configured transport and handle the result.
@@ -78,16 +127,18 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
     args: any[],
     signal: AbortSignal
   ) => {
-    const req = createRequest(method, args);
+    const req = createRequest(method, args, uuid);
     const raw = await transport(serialize(req as any), signal);
-    const res = deserialize(raw);
-    if ("result" in res) {
-      return res.result;
-    } else if ("error" in res) {
+    const res: unknown = deserialize(raw);
+    if (!isJsonRpcResponse(res)) {
+      throw new TypeError("Not a JSON-RPC 2.0 response");
+    }
+    if ("error" in res) {
       const { code, message, data } = res.error;
       throw new RpcError(message, code, data);
+    } else {
+      return res.result;
     }
-    throw new TypeError("Invalid response");
   };
 
   // Map of AbortControllers to abort pending requests
@@ -130,10 +181,16 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
 /**
  * Create a JsonRpcRequest for the given method.
  */
-export function createRequest(method: string, params?: any[]): JsonRpcRequest {
+export function createRequest(
+  method: string,
+  params?: any[],
+  uuid?: RpcUuid
+): JsonRpcRequest {
   const req: JsonRpcRequest = {
     jsonrpc: "2.0",
-    id: Date.now(),
+    id: uuid
+      ? uuid()
+      : Date.now().toString(36) + Math.random().toString(36).substring(2),
     method,
   };
 

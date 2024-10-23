@@ -1,16 +1,5 @@
 name: Test
-
-on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
-
-permissions:
-  checks: write
-  contents: write
+on: [push, pull_request]
 
 jobs:
   test:
@@ -23,11 +12,13 @@ jobs:
       - name: Set up Node
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          node-version: 20
       - name: Install dependencies
         run: npm install
+      - name: Check types
+        run: npm run typecheck
       - name: Run tests
         run: npm test
-      - name: Run typecheck
-        run: npm run typecheck
+      - name: Publish Preview Release
+        run: npx pkg-pr-new publish
 

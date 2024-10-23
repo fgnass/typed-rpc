@@ -31,12 +31,23 @@
         "types": "./dist/server.d.cts",
         "default": "./dist/server.cjs"
       }
+    },
+    "./ws": {
+      "import": {
+        "types": "./dist/ws.d.mts",
+        "default": "./dist/ws.mjs"
+      },
+      "require": {
+        "types": "./dist/ws.d.cts",
+        "default": "./dist/ws.cjs"
+      }
     }
   },
   "scripts": {
+    "dev": "tsx --watch src/e2e/server.ts",
     "build": "pkgroll --clean-dist --sourcemap",
-    "start": "tsx src/test/server.ts",
-    "test": "with-server tap src/test/client.ts",
+    "start": "tsx src/e2e/server.ts",
+    "test": "with-server tap",
     "prepare": "npm run build",
     "typecheck": "tsc --noEmit"
   },
