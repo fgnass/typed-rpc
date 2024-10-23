@@ -5,8 +5,6 @@ export interface JsonRpcRequest {
   params?: any[];
 }
 
-
-
 export interface BaseJsonRpcResponse {
   jsonrpc: "2.0";
   id: string | number | null;
