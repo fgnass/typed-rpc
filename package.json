@@ -8,7 +8,9 @@
     "typescript"
   ],
   "type": "module",
-  "main": "./dist/client.mjs",
+  "main": "./dist/client.cjs",
+  "module": "./dist/client.mjs",
+  "types": "./dist/client.d.ts",
   "files": [
     "dist"
   ],
