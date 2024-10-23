@@ -58,6 +58,7 @@
     "@types/express": "^5.0.0",
     "@types/isomorphic-fetch": "0.0.39",
     "@types/tap": "^15.0.12",
+    "@types/ws": "^8.5.12",
     "express": "^4.21.1",
     "isomorphic-fetch": "^3.0.0",
     "isomorphic-ws": "^5.0.0",
