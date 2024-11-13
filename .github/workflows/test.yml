@@ -19,5 +19,3 @@ jobs:
         run: npm run check
       - name: Run tests
         run: npm test
-      - name: Publish Preview Release
-        run: npx pkg-pr-new publish
