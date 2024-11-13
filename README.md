@@ -1,10 +1,6 @@
 # typed-rpc
 
-[![bundle size](https://badgen.net/bundlephobia/minzip/typed-rpc)](https://bundlephobia.com/package/typed-rpc)
-
-[![dependencies](https://badgen.net/bundlephobia/dependency-count/typed-rpc)](https://bundlephobia.com/package/typed-rpc)
-
-[![tree-shaking](https://badgen.net/bundlephobia/tree-shaking/typed-rpc)](https://bundlephobia.com/package/typed-rpc)
+[![bundle size](https://badgen.net/bundlephobia/minzip/typed-rpc)](https://bundlephobia.com/package/typed-rpc) [![dependencies](https://badgen.net/bundlephobia/dependency-count/typed-rpc)](https://bundlephobia.com/package/typed-rpc) [![tree-shaking](https://badgen.net/bundlephobia/tree-shaking/typed-rpc)](https://bundlephobia.com/package/typed-rpc)
 
 Lightweight [JSON-RPC](https://www.jsonrpc.org/specification) solution for TypeScript projects with the following features:
 
