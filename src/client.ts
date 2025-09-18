@@ -161,6 +161,7 @@ export function rpcClient<T extends object>(options: RpcClientOptions) {
         return Reflect.get(target, prop, receiver);
       }
       if (typeof prop === "symbol") return;
+      if (prop === "then") return; // make sure we are not treated as a Promise
       if (prop === "toJSON") return;
       return (...args: any) => {
         const ac = new AbortController();

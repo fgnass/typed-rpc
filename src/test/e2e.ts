@@ -40,6 +40,13 @@ function createWebSocketClient<T extends object>(options: {
 const url = process.env.SERVER_URL + "/api";
 globalThis.WebSocket = WS as any;
 
+tap.test("should be able to initialize client asynchronously", async (t) => {
+  const factory = async () => rpcClient<Service>({ url });
+  const client = await factory();
+  const result = await client.hello("world");
+  t.equal(result, "Hello world!");
+});
+
 tap.test("should talk to the server", async (t) => {
   const client = rpcClient<Service>(url);
   const result = await client.hello("world");
