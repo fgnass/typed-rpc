@@ -268,6 +268,10 @@ Pair `typed-rpc` with [react-api-query](https://www.npmjs.com/package/react-api-
 
 # Changelog
 
+### 6.1.2
+
+- Ensure the RpcClient is not treated as a promise. See [#33](https://github.com/fgnass/typed-rpc/pull/33)
+
 ### 6.1.1
 
 - Add back `"main"` and `"module"` entry points in `package.json` in addition to the exports map.
