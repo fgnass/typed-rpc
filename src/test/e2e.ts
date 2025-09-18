@@ -42,13 +42,8 @@ const url = process.env.SERVER_URL + "/api";
 globalThis.WebSocket = WS as any;
 
 tap.test("should be able to initialize client asynchronously", async (t) => {
-  type RpcClientService = ReturnType<typeof rpcClient<Service>>;
-  async function clientFactory(): Promise<RpcClientService> {
-    return new Promise(r => r(rpcClient<Service>({ url })));
-  }
-
-  const factory = await clientFactory();
-  const client = factory;
+  const factory = async () => rpcClient<Service>({ url });
+  const client = await factory();
   const result = await client.hello("world");
   t.equal(result, "Hello world!");
 });
