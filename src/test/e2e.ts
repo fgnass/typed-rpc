@@ -37,7 +37,6 @@ function createWebSocketClient<T extends object>(options: {
   };
 }
 
-
 const url = process.env.SERVER_URL + "/api";
 globalThis.WebSocket = WS as any;
 
